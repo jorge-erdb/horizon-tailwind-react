@@ -201,12 +201,55 @@ Things worth knowing before this goes in front of anyone:
 
 ---
 
-## Deployment
+## Deployment (Vercel)
 
-`npm run build` emits a static bundle in `dist/`. Serve it from any static
-host, with two requirements:
+`npm run build` emits a static bundle in `dist/`. `vercel.json` is committed
+and configures the deploy; Vercel needs no dashboard build settings.
 
-1. **SPA fallback** — rewrite all unmatched paths to `index.html`, or deep
-   links like `/auth/sign-in` will 404.
-2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the build
-   environment, and add the deployed origin to Supabase's Redirect URLs.
+**What `vercel.json` does, and why:**
+
+- **SPA fallback** — rewrites everything to `/index.html`. Without it,
+  hard-refreshing `/auth/sign-in` (or opening any emailed auth link) returns
+  404, because no such file exists. Vercel checks the filesystem *before*
+  rewrites, so real assets, `favicon.ico` and `manifest.json` still win over
+  the catch-all.
+- **Immutable caching** on `/assets/*`, which Vite content-hashes.
+- **Baseline security headers** — nosniff, `DENY` framing, a conservative
+  referrer policy, HSTS.
+
+Note `vercel.json` has no comments because JSON has none, and Vercel
+validates the file strictly — adding an unrecognised key (including a
+`comment` key) fails the build rather than being ignored.
+
+### Steps
+
+1. Import the repo in Vercel. It will detect Vite; `vercel.json` pins the
+   build command and output directory regardless.
+2. **Project → Settings → Environment Variables**, for Production, Preview
+   *and* Development:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+   These are inlined into the bundle at build time, so changing one requires
+   a **redeploy**, not just a restart.
+3. **Supabase → Authentication → URL Configuration**:
+   - Site URL: your production origin, e.g. `https://nova-analytics.vercel.app`
+   - Redirect URLs — add **both**:
+     ```
+     https://<your-production-domain>/**
+     https://<project>-*-<your-team>.vercel.app/**
+     ```
+     The second entry matters: every preview deployment gets a unique
+     generated hostname. Without the wildcard, a signup from a preview branch
+     sends a confirmation link that redirects to production, where the token
+     is not valid for that origin — the link appears to silently fail.
+
+### Not yet configured
+
+A **Content-Security-Policy** is deliberately absent. The correct policy for
+this app needs `connect-src` for `https://*.supabase.co`, font origins for
+`fonts.googleapis.com` / `fonts.gstatic.com`, and `style-src 'unsafe-inline'`
+for the styles Tailwind and ApexCharts inject at runtime. Shipping an
+untested CSP breaks the app in ways that are hard to diagnose, so it should
+be added and verified against a preview deployment rather than guessed at
+here.
