@@ -7,17 +7,17 @@ import { createClient } from "@supabase/supabase-js";
  * Nova's own project at https://supabase.com, then copy .env.example to
  * .env.local and fill in:
  *
- *   REACT_APP_SUPABASE_URL=https://<project-ref>.supabase.co
- *   REACT_APP_SUPABASE_ANON_KEY=<anon public key>
+ *   VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+ *   VITE_SUPABASE_ANON_KEY=<anon public key>
  *
- * Create React App only exposes variables prefixed with REACT_APP_, and it
- * inlines them at build time. The anon key is designed to be public — it is
- * what protects nothing on its own, so Row Level Security on every table is
- * what actually enforces access. Never put the service_role key here.
+ * Vite only exposes variables prefixed with VITE_, and it inlines them at
+ * build time. The anon key is designed to be public — it protects nothing on
+ * its own, so Row Level Security on every table is what actually enforces
+ * access. Never put the service_role key here.
  */
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -27,7 +27,7 @@ if (!isSupabaseConfigured) {
   // eslint-disable-next-line no-console
   console.warn(
     "[Nova] Supabase is not configured. Copy .env.example to .env.local and " +
-      "set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY, then " +
+      "set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then " +
       "restart the dev server. Authentication is disabled until you do."
   );
 }

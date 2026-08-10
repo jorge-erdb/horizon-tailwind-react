@@ -1,47 +1,19 @@
-import React from "react";
+import { MdLock, MdPersonAdd } from "react-icons/md";
 
-// Admin Imports
-import MainDashboard from "views/admin/default";
-import Profile from "views/admin/profile";
-import DataTables from "views/admin/tables";
-
-// Auth Imports
 import SignIn from "views/auth/SignIn";
 import SignUp from "views/auth/SignUp";
 import AuthCallback from "views/auth/AuthCallback";
 import ResetPassword from "views/auth/ResetPassword";
 
-// Icon Imports
-import {
-  MdHome,
-  MdBarChart,
-  MdPerson,
-  MdLock,
-  MdPersonAdd,
-} from "react-icons/md";
-
-const routes = [
-  {
-    name: "Main Dashboard",
-    layout: "/admin",
-    path: "default",
-    icon: <MdHome className="h-6 w-6" />,
-    component: <MainDashboard />,
-  },
-  {
-    name: "Data Tables",
-    layout: "/admin",
-    icon: <MdBarChart className="h-6 w-6" />,
-    path: "data-tables",
-    component: <DataTables />,
-  },
-  {
-    name: "Profile",
-    layout: "/admin",
-    path: "profile",
-    icon: <MdPerson className="h-6 w-6" />,
-    component: <Profile />,
-  },
+/**
+ * Auth routes are kept in their own module so the auth layout never pulls in
+ * the admin views. Sharing one route table meant the sign-in page shipped
+ * ApexCharts and every dashboard component — a few hundred KB on the critical
+ * signup path, for a screen with two inputs.
+ *
+ * These are all hideInSidebar; the sidebar only ever renders admin routes.
+ */
+const authRoutes = [
   {
     name: "Sign In",
     layout: "/auth",
@@ -76,4 +48,5 @@ const routes = [
     hideInSidebar: true,
   },
 ];
-export default routes;
+
+export default authRoutes;

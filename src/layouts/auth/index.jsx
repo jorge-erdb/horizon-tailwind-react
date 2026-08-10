@@ -3,7 +3,7 @@ import { MdArrowBack } from "react-icons/md";
 import Footer from "components/footer/FooterAuthDefault";
 import NovaLogo from "components/brand/NovaLogo";
 import FixedPlugin from "components/fixedPlugin/FixedPlugin";
-import routes from "routes.js";
+import routes from "routes/authRoutes";
 
 const highlights = [
   "Every source reconciled into one event model",

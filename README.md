@@ -28,10 +28,12 @@ Other scripts:
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Dev server with hot reload on port 3000 |
-| `npm run build` | Production bundle into `build/` |
-| `npm test` | Test runner (no test suite exists yet — see Limitations) |
-| `npm run pretty` | Prettier over all JS/JSX/JSON |
+| `npm run dev` (or `npm start`) | Vite dev server on port 3000 |
+| `npm run build` | Production bundle into `dist/` |
+| `npm run preview` | Serve the production build locally on port 3000 |
+| `npm run pretty` | Prettier over `src/**/*.{js,jsx,json}` |
+
+There is no test script — no test runner is configured yet. See Limitations.
 
 ### Environment variables
 
@@ -40,13 +42,13 @@ hardcoded.** Copy `.env.example` to `.env.local` and fill in:
 
 | Variable | Where to get it | Required |
 | --- | --- | --- |
-| `REACT_APP_SUPABASE_URL` | Supabase dashboard → Project Settings → Data API → Project URL | Yes, for auth |
-| `REACT_APP_SUPABASE_ANON_KEY` | Same page → Project API keys → `anon` `public` | Yes, for auth |
+| `VITE_SUPABASE_URL` | Supabase dashboard → Project Settings → Data API → Project URL | Yes, for auth |
+| `VITE_SUPABASE_ANON_KEY` | Same page → Project API keys → `anon` `public` | Yes, for auth |
 
 Notes:
 
-- Create React App only exposes variables prefixed with `REACT_APP_`, and it
-  **inlines them at build time**. Restart `npm start` after editing
+- Vite only exposes variables prefixed with `VITE_`, and it **inlines them at
+  build time**. Restart the dev server after editing
   `.env.local`; changing them requires a rebuild, not just a redeploy.
 - The anon key is designed to be public and shipped in a browser bundle. It
   is not a secret. What actually protects your data is **Row Level Security**
@@ -93,7 +95,7 @@ disabled submit buttons rather than crashing.
 | Layer | Choice | Why |
 | --- | --- | --- |
 | UI | React 19 | Already the base of the template this product is derived from; no reason to churn it. |
-| Build | Create React App (`react-scripts` 5) | Inherited. Kept deliberately — see Limitations. |
+| Build | Vite 8 | Migrated off the inherited Create React App, which is deprecated and carried transitive CVEs. Build went from ~40s to ~0.6s, and route-level code splitting became straightforward. |
 | Routing | React Router 6 | Inherited; `ProtectedRoute` composes cleanly with its element API. |
 | Styling | Tailwind CSS 3 | Inherited, and the brand kit maps onto a token-based utility system almost directly. |
 | Charts | ApexCharts via `react-apexcharts` | Inherited. Colors now come from the brand kit's `dataviz-categorical` palette. |
@@ -176,14 +178,12 @@ Things worth knowing before this goes in front of anyone:
 
 **Build and tooling**
 
-- Still on Create React App, which is deprecated and unmaintained. `npm
-  install` reports vulnerabilities from its transitive dependencies. Migrating
-  to Vite is the obvious next step but is a bigger change than a whitelabel
-  and would have made the diff hard to review.
-- No tests. `@testing-library` is installed but there is no test file and no
-  CI.
-- The `browserslist` database is ~20 months stale; `npx update-browserslist-db@latest`
-  clears the build warning.
+- No tests and no test runner. `@testing-library` packages are still
+  installed from the CRA era but nothing runs them — Vitest is the natural
+  fit alongside Vite.
+- The dashboard chunk is ~169 KB gzipped, almost all ApexCharts. It is
+  already split away from the landing and auth bundles, but swapping to a
+  lighter chart library would matter more than any further splitting.
 
 **Removed from the template**
 
@@ -203,10 +203,10 @@ Things worth knowing before this goes in front of anyone:
 
 ## Deployment
 
-`npm run build` emits a static bundle in `build/`. Serve it from any static
+`npm run build` emits a static bundle in `dist/`. Serve it from any static
 host, with two requirements:
 
 1. **SPA fallback** — rewrite all unmatched paths to `index.html`, or deep
    links like `/auth/sign-in` will 404.
-2. Set `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` in the build
+2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the build
    environment, and add the deployed origin to Supabase's Redirect URLs.

@@ -6,7 +6,7 @@ import Links from "./components/Links";
 
 import NovaLogo from "components/brand/NovaLogo";
 import SidebarCard from "components/sidebar/components/SidebarCard";
-import routes from "routes.js";
+import routes from "routes/adminRoutes";
 
 const Sidebar = ({ open, onClose }) => {
   return (

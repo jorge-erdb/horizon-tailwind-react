@@ -89,7 +89,7 @@ export default function SignUp() {
         {!isConfigured && (
           <AuthFeedback tone="info">
             Supabase isn't configured yet, so sign-up is disabled. Add
-            REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to
+            VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to
             .env.local and restart the dev server.
           </AuthFeedback>
         )}
