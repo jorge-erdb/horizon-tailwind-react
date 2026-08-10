@@ -7,15 +7,17 @@ import { useAuth, describeAuthError } from "contexts/AuthContext";
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function SignUp() {
-  const { signUp, isConfigured } = useAuth();
+  const { signUp, resendConfirmation, isConfigured } = useAuth();
   const navigate = useNavigate();
 
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -36,7 +38,7 @@ export default function SignUp() {
     }
 
     setSubmitting(true);
-    const result = await signUp({ email, password });
+    const result = await signUp({ email, password, fullName });
     setSubmitting(false);
 
     if (result.error) {
@@ -48,8 +50,9 @@ export default function SignUp() {
       // Email confirmation is on in the Supabase project, so there's no
       // session yet — keep them here with instructions instead of bouncing
       // them into a dashboard they can't load.
+      setPendingEmail(email.trim());
       setNotice(
-        `We sent a confirmation link to ${email.trim()}. Click it, then sign in.`
+        `We sent a confirmation link to ${email.trim()}. Open it and you'll land straight in your workspace.`
       );
       setPassword("");
       setConfirmPassword("");
@@ -58,6 +61,19 @@ export default function SignUp() {
 
     // Email confirmation is off: signUp returned a session, so they're in.
     navigate("/admin/default", { replace: true });
+  };
+
+  const handleResend = async () => {
+    setError(null);
+    setSubmitting(true);
+    const { error: resendError } = await resendConfirmation(pendingEmail);
+    setSubmitting(false);
+
+    if (resendError) {
+      setError(describeAuthError(resendError));
+      return;
+    }
+    setNotice(`Sent another confirmation link to ${pendingEmail}.`);
   };
 
   return (
@@ -82,6 +98,19 @@ export default function SignUp() {
         <AuthFeedback tone="error">{error}</AuthFeedback>
 
         <form onSubmit={handleSubmit} noValidate>
+          <InputField
+            variant="auth"
+            extra="mb-3"
+            label="Full name"
+            placeholder="Alex Rivera"
+            id="full-name"
+            type="text"
+            name="fullName"
+            autoComplete="name"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+          />
+
           <InputField
             variant="auth"
             extra="mb-3"
@@ -132,6 +161,17 @@ export default function SignUp() {
             {submitting ? "Creating account…" : "Create account"}
           </button>
         </form>
+
+        {pendingEmail && (
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={submitting}
+            className="mt-4 text-sm font-medium text-brand-500 transition-colors hover:text-brand-600 disabled:opacity-60"
+          >
+            Didn't get it? Send the link again
+          </button>
+        )}
 
         <p className="mt-4 text-xs leading-relaxed text-gray-600">
           By creating an account you agree to Nova Analytics'{" "}

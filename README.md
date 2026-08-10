@@ -60,19 +60,27 @@ Notes:
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Authentication → Providers → Email**: enable it. Email/password is all
    this app uses; no OAuth provider is wired up.
-3. **Authentication → URL Configuration**: set Site URL to
-   `http://localhost:3000` for local development, and add your production
-   origin to Redirect URLs before deploying. Confirmation and password-reset
-   links point back to `/auth/sign-in` at whatever origin the user signed up
-   from.
-4. **Authentication → Email → Confirm email**: your call.
-   - **On** (Supabase default): sign-up shows a "check your inbox" message and
-     does not sign the user in until they click the link. This is the safer
-     setting and the app handles it.
-   - **Off**: sign-up returns a session immediately and drops the user
-     straight into the dashboard. Convenient for demos.
-5. Supabase's built-in SMTP is heavily rate-limited and intended only for
-   testing. Configure your own SMTP before any real signup volume.
+3. **Authentication → URL Configuration → Site URL**: `http://localhost:3000`
+   for local development; your real origin before deploying.
+4. **Authentication → URL Configuration → Redirect URLs**: add
+   `http://localhost:3000/**` (and `https://your-domain/**` for production).
+   **This is required.** Every emailed link redirects to `/auth/callback`, and
+   Supabase silently falls back to the Site URL if that path is not
+   allow-listed — the link then appears to do nothing.
+5. **Authentication → Email → Confirm email**: your call. Both are handled.
+   - **On** (Supabase default): sign-up shows a "check your inbox" message
+     with a resend option; the emailed link lands on `/auth/callback`, which
+     establishes the session and forwards into the dashboard.
+   - **Off**: sign-up returns a session immediately and goes straight to the
+     dashboard.
+6. **Run the database migration**: paste `supabase/migrations/0001_profiles.sql`
+   into the SQL Editor and run it. It creates `public.profiles`, enables RLS
+   with owner-only policies, and adds a trigger that creates a profile row on
+   signup. Without it the app still works, but the profile page falls back to
+   session data and the console warns.
+7. Supabase's built-in SMTP is heavily rate-limited (a few messages per hour)
+   and intended only for testing. Configure your own SMTP before any real
+   signup volume.
 
 If the two env vars are missing the app still builds and runs — the landing
 page works, and the auth screens render with an explanatory banner and
@@ -101,13 +109,14 @@ src/
   components/
     auth/ProtectedRoute   Session gate for /admin/*
     brand/NovaLogo        Inline-SVG logo (mark | horizontal | stacked)
-  contexts/AuthContext    Session state + signIn/signUp/signOut/resetPassword
+  contexts/AuthContext    Session + profile state, all auth actions
   lib/supabase.js         Supabase client, reads env vars
   views/
     landing/              Marketing page and its sections
-    auth/                 SignIn, SignUp
+    auth/                 SignIn, SignUp, AuthCallback, ResetPassword
     admin/                Dashboard, data tables, profile
   routes.js               Sidebar + router route table
+supabase/migrations/      SQL to run in the Supabase SQL Editor
 tailwind.config.js        Nova design tokens
 ```
 
@@ -142,23 +151,24 @@ Things worth knowing before this goes in front of anyone:
 - Email/password only. No OAuth, no magic links, no MFA. The
   non-functional "Sign in with Google" button from the template was removed
   rather than left as decoration.
-- "Forgot password?" sends a Supabase reset email, but there is **no
-  `/auth/reset-password` screen** to land on — the link currently returns
-  users to sign-in. Completing that flow needs one more view.
-- No user profile table. Supabase's email/password sign-up collects no
-  display name, so the navbar greets users with the local part of their email
-  address.
-- No email verification gate beyond Supabase's own. Any confirmed address can
-  reach the dashboard; there are no roles, teams or permissions.
+- Password reset is complete: request → email → `/auth/callback` →
+  `/auth/reset-password` → signed in with the new password.
+- `public.profiles` stores name, role and team, and the navbar/profile page
+  read from it. Nothing in the UI edits it yet — role and team are set
+  directly in the database.
+- The `role` column is descriptive only. There is no authorization: any
+  confirmed account reaches the whole dashboard. Enforcing roles means RLS
+  policies on real tables plus route guards.
 
 **Data**
 
-- **The dashboard is entirely static demo data.** Every number, chart and
-  table row is a fixture under `src/views/admin/*/variables/`. Nothing is
-  fetched, and no Supabase tables are read. The dashboard is a whitelabeled
-  shell, not a working analytics product.
-- The profile page still shows a hardcoded sample user (Alex Rivera,
-  `admin@novaanalytics.io`) rather than the signed-in account.
+- **The dashboard charts and tables are still static demo data.** Every
+  number, chart and table row is a fixture under
+  `src/views/admin/*/variables/`. The only live data in the app is the
+  signed-in user and their profile row.
+- The profile page reads the real account, but the "Plan" and "Data
+  residency" cards are still hardcoded copy — there are no columns behind
+  them yet.
 - Landing-page copy — pricing, uptime, event volumes, "SOC 2 Type II" — is
   **placeholder marketing copy that I invented**. Replace it with claims Nova
   can actually stand behind before this is public. Compliance claims in

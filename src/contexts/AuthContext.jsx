@@ -54,6 +54,8 @@ export function AuthProvider({ children }) {
   // Starts true so protected routes wait for the initial session lookup
   // instead of bouncing an already-signed-in user back to sign-in.
   const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined;
@@ -79,6 +81,48 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Load the public.profiles row for the signed-in user. RLS restricts this
+  // to their own row, so no filtering beyond the id is needed for safety —
+  // it's there so the query is a primary-key lookup.
+  useEffect(() => {
+    const userId = session?.user?.id;
+
+    if (!isSupabaseConfigured || !userId) {
+      setProfile(null);
+      setProfileLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+    setProfileLoading(true);
+
+    supabase
+      .from("profiles")
+      .select("id, email, full_name, role, team, avatar_url, created_at")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          // Most likely the migration hasn't been run yet. The app falls back
+          // to session data rather than breaking the dashboard.
+          // eslint-disable-next-line no-console
+          console.warn(
+            "[Nova] Couldn't load profile row — has supabase/migrations/0001_profiles.sql been run?",
+            error.message
+          );
+          setProfile(null);
+        } else {
+          setProfile(data ?? null);
+        }
+        setProfileLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+
   const signIn = useCallback(async ({ email, password }) => {
     if (!isSupabaseConfigured) return { error: NOT_CONFIGURED };
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -88,13 +132,18 @@ export function AuthProvider({ children }) {
     return { data, error };
   }, []);
 
-  const signUp = useCallback(async ({ email, password }) => {
+  const signUp = useCallback(async ({ email, password, fullName }) => {
     if (!isSupabaseConfigured) return { error: NOT_CONFIGURED };
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/sign-in`,
+        // The confirmation link lands here, which establishes the session and
+        // forwards into the dashboard. Pointing it at /auth/sign-in left the
+        // user staring at a login form they no longer needed.
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Read by the handle_new_user trigger to seed public.profiles.
+        data: fullName?.trim() ? { full_name: fullName.trim() } : undefined,
       },
     });
 
@@ -117,7 +166,25 @@ export function AuthProvider({ children }) {
   const resetPassword = useCallback(async (email) => {
     if (!isSupabaseConfigured) return { error: NOT_CONFIGURED };
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/sign-in`,
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    return { error };
+  }, []);
+
+  const updatePassword = useCallback(async (password) => {
+    if (!isSupabaseConfigured) return { error: NOT_CONFIGURED };
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error };
+  }, []);
+
+  const resendConfirmation = useCallback(async (email) => {
+    if (!isSupabaseConfigured) return { error: NOT_CONFIGURED };
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     return { error };
   }, []);
@@ -138,8 +205,23 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
       resetPassword,
+      updatePassword,
+      resendConfirmation,
+      profile,
+      profileLoading,
     }),
-    [session, loading, signIn, signUp, signOut, resetPassword]
+    [
+      session,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      resetPassword,
+      updatePassword,
+      resendConfirmation,
+      profile,
+      profileLoading,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

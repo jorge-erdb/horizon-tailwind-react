@@ -8,6 +8,8 @@ import DataTables from "views/admin/tables";
 // Auth Imports
 import SignIn from "views/auth/SignIn";
 import SignUp from "views/auth/SignUp";
+import AuthCallback from "views/auth/AuthCallback";
+import ResetPassword from "views/auth/ResetPassword";
 
 // Icon Imports
 import {
@@ -54,6 +56,23 @@ const routes = [
     path: "sign-up",
     icon: <MdPersonAdd className="h-6 w-6" />,
     component: <SignUp />,
+    hideInSidebar: true,
+  },
+  {
+    // Landing route for every link Supabase emails (confirmation, recovery).
+    name: "Confirm",
+    layout: "/auth",
+    path: "callback",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <AuthCallback />,
+    hideInSidebar: true,
+  },
+  {
+    name: "Reset Password",
+    layout: "/auth",
+    path: "reset-password",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ResetPassword />,
     hideInSidebar: true,
   },
 ];
