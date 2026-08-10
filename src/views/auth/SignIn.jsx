@@ -31,7 +31,7 @@ export default function SignIn() {
           variant="auth"
           extra="mb-3"
           label="Email*"
-          placeholder="mail@simmmple.com"
+          placeholder="admin@novaanalytics.io"
           id="email"
           type="text"
         />

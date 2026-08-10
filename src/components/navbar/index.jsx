@@ -185,7 +185,7 @@ const Navbar = (props) => {
             <img
               className="h-10 w-10 rounded-full"
               src={avatar}
-              alt="Elon Musk"
+              alt="Alex Rivera"
             />
           }
           children={
@@ -193,7 +193,7 @@ const Navbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Hey, Adela
+                    👋 Hey, Alex
                   </p>{" "}
                 </div>
               </div>
@@ -210,7 +210,7 @@ const Navbar = (props) => {
                   href=" "
                   className="mt-3 text-sm text-gray-800 dark:text-white hover:dark:text-white"
                 >
-                  Newsletter Settings
+                  Workspace Settings
                 </a>
                 <a
                   href=" "

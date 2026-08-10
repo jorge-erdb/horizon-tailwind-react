@@ -103,7 +103,7 @@ export const barChartOptionsDailyTraffic = {
 };
 
 export const pieChartOptions = {
-  labels: ["Your files", "System", "Empty"],
+  labels: ["Web", "Mobile", "API"],
   colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
   chart: {
     width: "50px",
@@ -150,17 +150,17 @@ export const pieChartData = [63, 25, 12];
 
 export const barChartDataWeeklyRevenue = [
   {
-    name: "PRODUCT A",
+    name: "Subscriptions",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
     color: "#22D3EE",
   },
   {
-    name: "PRODUCT B",
+    name: "Usage-based",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
     color: "#4F46E5",
   },
   {
-    name: "PRODUCT C",
+    name: "Services",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
     color: "#EEF1F6",
   },

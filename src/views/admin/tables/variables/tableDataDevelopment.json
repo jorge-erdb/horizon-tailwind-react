@@ -1,80 +1,80 @@
 [
   {
-    "name": "Marketplace",
+    "name": "Web Analytics",
     "tech": ["apple", "android", "windows"],
-    "date": "12.Jan.2021",
-    "progress": 30
+    "date": "12 Jan 2026",
+    "progress": 82
   },
   {
-    "name": "Venus DB PRO",
+    "name": "Mobile SDK",
+    "tech": ["apple", "android"],
+    "date": "21 Feb 2026",
+    "progress": 64
+  },
+  {
+    "name": "Billing Events",
+    "tech": ["windows"],
+    "date": "13 Mar 2026",
+    "progress": 47
+  },
+  {
+    "name": "Checkout Funnel",
+    "tech": ["apple", "android", "windows"],
+    "date": "24 Mar 2026",
+    "progress": 95
+  },
+  {
+    "name": "Email Campaigns",
+    "tech": ["apple", "windows"],
+    "date": "02 Apr 2026",
+    "progress": 38
+  },
+  {
+    "name": "Product API",
+    "tech": ["apple", "android", "windows"],
+    "date": "18 Apr 2026",
+    "progress": 71
+  },
+  {
+    "name": "Support Tickets",
+    "tech": ["windows"],
+    "date": "05 May 2026",
+    "progress": 29
+  },
+  {
+    "name": "Warehouse Sync",
     "tech": ["apple"],
-    "date": "21.Feb.2021",
-    "progress": 30
+    "date": "22 May 2026",
+    "progress": 12
   },
   {
-    "name": "Venus DS",
+    "name": "Marketing Site",
     "tech": ["apple", "windows"],
-    "date": "13.Mar.2021",
-    "progress": 30
+    "date": "09 Jun 2026",
+    "progress": 58
   },
   {
-    "name": "Venus 3D Asset",
+    "name": "Ad Spend Import",
+    "tech": ["android", "windows"],
+    "date": "27 Jun 2026",
+    "progress": 44
+  },
+  {
+    "name": "Session Replay",
     "tech": ["apple", "android", "windows"],
-    "date": "24.Jan.2021",
-    "progress": 30
+    "date": "14 Jul 2026",
+    "progress": 76
   },
   {
-    "name": "Marketplace",
-    "tech": ["apple", "windows"],
-    "date": "Oct 24, 2022",
-    "progress": 30
+    "name": "Experiment Engine",
+    "tech": ["apple", "android"],
+    "date": "31 Jul 2026",
+    "progress": 33
   },
   {
-    "name": "Marketplace",
+    "name": "Attribution Model",
     "tech": ["apple", "android", "windows"],
-    "date": "Oct 24, 2022",
-    "progress": 30
-  },
-  {
-    "name": "Marketplace",
-    "tech": ["apple", "android", "windows"],
-    "date": "12.Jan.2021",
-    "progress": 30
-  },
-  {
-    "name": "Venus DB PRO",
-    "tech": ["apple"],
-    "date": "21.Feb.2021",
-    "progress": 30
-  },
-  {
-    "name": "Venus DS",
-    "tech": ["apple", "windows"],
-    "date": "13.Mar.2021",
-    "progress": 30
-  },
-  {
-    "name": "Venus 3D Asset",
-    "tech": ["apple", "android", "windows"],
-    "date": "24.Jan.2021",
-    "progress": 30
-  },
-  {
-    "name": "Marketplace",
-    "tech": ["apple", "windows"],
-    "date": "Oct 24, 2022",
-    "progress": 30
-  },
-  {
-    "name": "Marketplace",
-    "tech": ["apple", "android", "windows"],
-    "date": "Oct 24, 2022",
-    "progress": 30
-  },
-  {
-    "name": "Marketplace",
-    "tech": ["apple", "android", "windows"],
-    "date": "Oct 24, 2022",
-    "progress": 30
+    "date": "18 Aug 2026",
+    "progress": 51
   }
 ]
