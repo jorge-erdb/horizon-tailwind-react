@@ -14,13 +14,13 @@ export const barChartOptionsDailyTraffic = {
   tooltip: {
     style: {
       fontSize: "12px",
-      fontFamily: undefined,
-      backgroundColor: "#000000"
+      fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
+      backgroundColor: "#0F172A"
     },
     onDatasetHover: {
       style: {
         fontSize: "12px",
-        fontFamily: undefined,
+        fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
       },
     },
     theme: "dark",
@@ -31,7 +31,7 @@ export const barChartOptionsDailyTraffic = {
     labels: {
       show: true,
       style: {
-        colors: "#A3AED0",
+        colors: "#64748B",
         fontSize: "14px",
         fontWeight: "500",
       },
@@ -49,7 +49,7 @@ export const barChartOptionsDailyTraffic = {
     labels: {
       show: true,
       style: {
-        colors: "#CBD5E0",
+        colors: "#CBD3E1",
         fontSize: "14px",
       },
     },
@@ -79,7 +79,7 @@ export const barChartOptionsDailyTraffic = {
         [
           {
             offset: 0,
-            color: "#4318FF",
+            color: "#4F46E5",
             opacity: 1,
           },
           {
@@ -104,7 +104,7 @@ export const barChartOptionsDailyTraffic = {
 
 export const pieChartOptions = {
   labels: ["Your files", "System", "Empty"],
-  colors: ["#4318FF", "#6AD2FF", "#EFF4FB"],
+  colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
   chart: {
     width: "50px",
   },
@@ -133,15 +133,15 @@ export const pieChartOptions = {
     },
   },
   fill: {
-    colors: ["#4318FF", "#6AD2FF", "#EFF4FB"],
+    colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
   },
   tooltip: {
     enabled: true,
     theme: "dark",
     style: {
       fontSize: "12px",
-      fontFamily: undefined,
-      backgroundColor: "#000000"
+      fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
+      backgroundColor: "#0F172A"
     },
   },
 };
@@ -152,17 +152,17 @@ export const barChartDataWeeklyRevenue = [
   {
     name: "PRODUCT A",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#6AD2Fa",
+    color: "#22D3EE",
   },
   {
     name: "PRODUCT B",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#4318FF",
+    color: "#4F46E5",
   },
   {
     name: "PRODUCT C",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#EFF4FB",
+    color: "#EEF1F6",
   },
 ];
 
@@ -173,18 +173,17 @@ export const barChartOptionsWeeklyRevenue = {
       show: false,
     },
   },
-  // colors:['#ff3322','#faf']
   tooltip: {
     style: {
       fontSize: "12px",
-      fontFamily: undefined,
-      backgroundColor: "#000000"
+      fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
+      backgroundColor: "#0F172A"
     },
     theme: 'dark',
     onDatasetHover: {
       style: {
         fontSize: "12px",
-        fontFamily: undefined,
+        fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
       },
     },
   },
@@ -194,7 +193,7 @@ export const barChartOptionsWeeklyRevenue = {
     labels: {
       show: true,
       style: {
-        colors: "#A3AED0",
+        colors: "#64748B",
         fontSize: "14px",
         fontWeight: "500",
       },
@@ -212,7 +211,7 @@ export const barChartOptionsWeeklyRevenue = {
     labels: {
       show: false,
       style: {
-        colors: "#A3AED0",
+        colors: "#64748B",
         fontSize: "14px",
         fontWeight: "500",
       },
@@ -239,12 +238,12 @@ export const barChartOptionsWeeklyRevenue = {
   },
   fill: {
     type: "solid",
-    colors: ["#5E37FF", "#6AD2FF", "#E1E9F8"],
+    colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
   },
   legend: {
     show: false,
   },
-  colors: ["#5E37FF", "#6AD2FF", "#E1E9F8"],
+  colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
   dataLabels: {
     enabled: false,
   },
@@ -260,12 +259,12 @@ export const lineChartDataTotalSpent = [
   {
     name: "Revenue",
     data: [50, 64, 48, 66, 49, 68],
-    color: "#4318FF",
+    color: "#4F46E5",
   },
   {
     name: "Profit",
     data: [30, 40, 24, 46, 20, 46],
-    color: "#6AD2FF",
+    color: "#22D3EE",
   },
 ];
 
@@ -295,8 +294,8 @@ export const lineChartOptionsTotalSpent = {
   tooltip: {
     style: {
       fontSize: "12px",
-      fontFamily: undefined,
-      backgroundColor: "#000000"
+      fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace",
+      backgroundColor: "#0F172A"
     },
     theme: 'dark',
     x: {
@@ -315,7 +314,7 @@ export const lineChartOptionsTotalSpent = {
     },
     labels: {
       style: {
-        colors: "#A3AED0",
+        colors: "#64748B",
         fontSize: "12px",
         fontWeight: "500",
       },

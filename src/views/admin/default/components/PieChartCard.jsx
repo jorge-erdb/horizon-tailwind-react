@@ -39,7 +39,7 @@ const PieChartCard = () => {
 
         <div className="flex flex-col items-center justify-center">
           <div className="flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-[#6AD2FF]" />
+            <div className="h-2 w-2 rounded-full bg-[#22D3EE]" />
             <p className="ml-1 text-sm font-normal text-gray-600">System</p>
           </div>
           <p className="mt-px text-xl font-bold text-navy-700 dark:text-white">

@@ -17,7 +17,7 @@ const Navbar = (props) => {
   const [darkmode, setDarkmode] = React.useState(false);
 
   return (
-    <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
+    <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0F172A4d]">
       <div className="ml-[6px]">
         <div className="h-6 w-[224px] pt-1">
           <a

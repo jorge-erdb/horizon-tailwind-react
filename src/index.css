@@ -1,29 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+/* Nova Analytics typography — Space Grotesk (display), Inter (body/UI),
+   JetBrains Mono (metrics/tables/code). */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Brand tokens, mirrored from nova_analytics_id/tokens/*.css so plain CSS and
+   inline styles can reach the palette without going through Tailwind. */
+:root {
+	/* Brand */
+	--nova-indigo: #4F46E5;
+	--nova-indigo-dark: #3730A3;
+	--nova-indigo-darker: #1E1B4B;
+	--nova-spark: #22D3EE;
+	--nova-spark-light: #67E8F9;
+	--nova-amber: #F5A623;
+
+	/* Neutral */
+	--nova-ink: #0F172A;
+	--nova-gray-900: #0F172A;
+	--nova-gray-700: #334155;
+	--nova-gray-500: #64748B;
+	--nova-gray-300: #CBD3E1;
+	--nova-gray-100: #EEF1F6;
+	--nova-gray-50: #F8FAFC;
+	--nova-white: #FFFFFF;
+
+	/* Semantic */
+	--nova-success: #16A34A;
+	--nova-warning: #F59E0B;
+	--nova-danger: #DC2626;
+	--nova-info: #4F46E5;
+
+	/* Type */
+	--nova-font-display: 'Space Grotesk', 'Sora', system-ui, -apple-system, sans-serif;
+	--nova-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--nova-font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
 @layer base {
 	html {
-		font-family: 'DM Sans', sans-serif !important;
-		font-feature-settings: 'kern' !important;
+		font-family: var(--nova-font-body);
+		font-feature-settings: 'kern', 'cv11', 'ss01';
 		-webkit-font-smoothing: antialiased;
-		letter-spacing: -0.5px;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--nova-font-display);
+		letter-spacing: -0.02em;
 	}
 }
 
 input.defaultCheckbox::before {
-	content: url(../src/assets/svg/checked.svg); 
+	content: url(../src/assets/svg/checked.svg);
 	color: white;
-	opacity: 0; 
-	height: 16px; 
+	opacity: 0;
+	height: 16px;
 	width: 16px;
-	position: absolute; 
+	position: absolute;
 	left: 50%;
 	transform: translate(-50%, 0px);
-} 
+}
 
-input:checked.defaultCheckbox::before { 
+input:checked.defaultCheckbox::before {
 	opacity: 1;
 }
