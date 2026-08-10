@@ -1,8 +1,10 @@
 /* eslint-disable */
 
 import { HiX } from "react-icons/hi";
+import { Link } from "react-router-dom";
 import Links from "./components/Links";
 
+import NovaLogo from "components/brand/NovaLogo";
 import SidebarCard from "components/sidebar/components/SidebarCard";
 import routes from "routes.js";
 
@@ -20,19 +22,22 @@ const Sidebar = ({ open, onClose }) => {
         <HiX />
       </span>
 
-      <div className={`mx-[56px] mt-[50px] flex items-center`}>
-        <div className="mt-1 ml-1 h-2.5 font-poppins text-[26px] font-bold uppercase text-navy-700 dark:text-white">
-          Horizon <span class="font-medium">FREE</span>
-        </div>
+      <div className="mx-[40px] mt-[42px] flex items-center">
+        <Link to="/" aria-label="Nova Analytics home">
+          <NovaLogo
+            variant="horizontal"
+            className="h-9 w-auto text-navy-700 dark:text-white"
+          />
+        </Link>
       </div>
-      <div class="mt-[58px] mb-7 h-px bg-gray-300 dark:bg-white/30" />
+      <div className="mt-[36px] mb-7 h-px bg-neutral-200 dark:bg-white/20" />
       {/* Nav item */}
 
       <ul className="mb-auto pt-1">
         <Links routes={routes} />
       </ul>
 
-      {/* Free Horizon Card */}
+      {/* Product callout */}
       <div className="flex justify-center">
         <SidebarCard />
       </div>

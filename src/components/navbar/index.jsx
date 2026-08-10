@@ -2,15 +2,28 @@ import React from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import navbarimage from "assets/img/layout/Navbar.png";
-import { BsArrowBarUp } from "react-icons/bs";
+import { BsArrowBarUp, BsGraphUpArrow } from "react-icons/bs";
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import {
   IoMdNotificationsOutline,
   IoMdInformationCircleOutline,
 } from "react-icons/io";
+import NovaLogo from "components/brand/NovaLogo";
 import avatar from "assets/img/avatars/avatar4.png";
+
+const notifications = [
+  {
+    icon: BsGraphUpArrow,
+    title: "Signup conversion is up 12%",
+    body: "Week over week, driven by the paid-search segment.",
+  },
+  {
+    icon: BsArrowBarUp,
+    title: "Weekly report is ready",
+    body: "Your Nova Analytics summary for last week has been generated.",
+  },
+];
 
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;
@@ -83,38 +96,26 @@ const Navbar = (props) => {
                 </p>
               </div>
 
-              <button className="flex w-full items-center">
-                <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-brandLinear to-brand-500 py-4 text-2xl text-white">
-                  <BsArrowBarUp />
-                </div>
-                <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
-                  <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    New Update: Horizon UI Dashboard PRO
-                  </p>
-                  <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    A new update for your downloaded item is available!
-                  </p>
-                </div>
-              </button>
-
-              <button className="flex w-full items-center">
-                <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-brandLinear to-brand-500 py-4 text-2xl text-white">
-                  <BsArrowBarUp />
-                </div>
-                <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
-                  <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    New Update: Horizon UI Dashboard PRO
-                  </p>
-                  <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    A new update for your downloaded item is available!
-                  </p>
-                </div>
-              </button>
+              {notifications.map((item) => (
+                <button key={item.title} className="flex w-full items-center">
+                  <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-nova-spark py-4 text-2xl text-white">
+                    <item.icon />
+                  </div>
+                  <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
+                    <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
+                      {item.title}
+                    </p>
+                    <p className="font-base text-left text-xs text-gray-900 dark:text-white">
+                      {item.body}
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
           }
           classNames={"py-2 top-4 -left-[230px] md:-left-[440px] w-max"}
         />
-        {/* start Horizon PRO */}
+        {/* start Help & resources */}
         <Dropdown
           button={
             <p className="cursor-pointer">
@@ -122,35 +123,38 @@ const Navbar = (props) => {
             </p>
           }
           children={
-            <div className="flex w-[350px] flex-col gap-2 rounded-[20px] bg-white p-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
-              <div
-                style={{
-                  backgroundImage: `url(${navbarimage})`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "cover",
-                }}
-                className="mb-2 aspect-video w-full rounded-lg"
-              />
+            <div className="flex w-[320px] flex-col gap-2 rounded-[20px] bg-white p-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
+              <div className="mb-2 flex flex-col justify-center rounded-lg bg-nova-gradient p-5">
+                <NovaLogo
+                  variant="mark"
+                  className="h-9 w-9"
+                  markColor="#FFFFFF"
+                  sparkColor="#67E8F9"
+                />
+                <p className="mt-3 font-display text-base font-bold text-white">
+                  Need a hand?
+                </p>
+                <p className="mt-1 text-xs text-white/80">
+                  Guides, API reference and support for your Nova workspace.
+                </p>
+              </div>
               <a
-                target="blank"
-                href="https://horizon-ui.com/pro?ref=live-free-tailwind-react"
-                className="px-full linear flex cursor-pointer items-center justify-center rounded-xl bg-brand-500 py-[11px] font-bold text-white transition duration-200 hover:bg-brand-600 hover:text-white active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:bg-brand-200"
+                href="/docs"
+                className="px-full linear flex cursor-pointer items-center justify-center rounded-xl bg-brand-500 py-[11px] font-bold text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:bg-brand-200"
               >
-                Buy Horizon UI PRO
+                Documentation
               </a>
               <a
-                target="blank"
-                href="https://horizon-ui.com/docs-tailwind/docs/react/installation?ref=live-free-tailwind-react"
-                className="px-full linear flex cursor-pointer items-center justify-center rounded-xl border py-[11px] font-bold text-navy-700 transition duration-200 hover:bg-gray-200 hover:text-navy-700 dark:!border-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:active:bg-white/10"
+                href="/docs/api"
+                className="px-full linear flex cursor-pointer items-center justify-center rounded-xl border py-[11px] font-bold text-navy-700 transition duration-200 hover:bg-gray-200 dark:!border-white/10 dark:text-white dark:hover:bg-white/20 dark:active:bg-white/10"
               >
-                See Documentation
+                API reference
               </a>
               <a
-                target="blank"
-                href="https://horizon-ui.com/?ref=live-free-tailwind-react"
-                className="hover:bg-black px-full linear flex cursor-pointer items-center justify-center rounded-xl py-[11px] font-bold text-navy-700 transition duration-200 hover:text-navy-700 dark:text-white dark:hover:text-white"
+                href="mailto:support@novaanalytics.io"
+                className="px-full linear flex cursor-pointer items-center justify-center rounded-xl py-[11px] font-bold text-navy-700 transition duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10"
               >
-                Try Horizon Free
+                Contact support
               </a>
             </div>
           }

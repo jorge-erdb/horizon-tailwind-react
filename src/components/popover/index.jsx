@@ -1,5 +1,5 @@
 import { Popover, PopoverTrigger, PopoverContent } from "@chakra-ui/popover";
-const PopoverHorizon = (props) => {
+const NovaPopover = (props) => {
   const { extra, trigger, content } = props;
   return (
     <Popover>
@@ -13,4 +13,4 @@ const PopoverHorizon = (props) => {
   );
 };
 
-export default PopoverHorizon;
+export default NovaPopover;
