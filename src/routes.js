@@ -7,9 +7,16 @@ import DataTables from "views/admin/tables";
 
 // Auth Imports
 import SignIn from "views/auth/SignIn";
+import SignUp from "views/auth/SignUp";
 
 // Icon Imports
-import { MdHome, MdBarChart, MdPerson, MdLock } from "react-icons/md";
+import {
+  MdHome,
+  MdBarChart,
+  MdPerson,
+  MdLock,
+  MdPersonAdd,
+} from "react-icons/md";
 
 const routes = [
   {
@@ -39,6 +46,14 @@ const routes = [
     path: "sign-in",
     icon: <MdLock className="h-6 w-6" />,
     component: <SignIn />,
+    hideInSidebar: true,
+  },
+  {
+    name: "Sign Up",
+    layout: "/auth",
+    path: "sign-up",
+    icon: <MdPersonAdd className="h-6 w-6" />,
+    component: <SignUp />,
     hideInSidebar: true,
   },
 ];

@@ -9,7 +9,9 @@ import {
   IoMdNotificationsOutline,
   IoMdInformationCircleOutline,
 } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 import NovaLogo from "components/brand/NovaLogo";
+import { useAuth } from "contexts/AuthContext";
 import avatar from "assets/img/avatars/avatar4.png";
 
 const notifications = [
@@ -28,6 +30,18 @@ const notifications = [
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Supabase email/password sign-up collects no display name, so greet with
+  // the local part of the address until a profile record exists.
+  const displayName = user?.email ? user.email.split("@")[0] : "there";
+
+  const handleSignOut = async (event) => {
+    event.preventDefault();
+    await signOut();
+    navigate("/", { replace: true });
+  };
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0F172A4d]">
@@ -185,39 +199,43 @@ const Navbar = (props) => {
             <img
               className="h-10 w-10 rounded-full"
               src={avatar}
-              alt="Alex Rivera"
+              alt={user?.email ?? "Account"}
             />
           }
           children={
             <div className="flex w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
               <div className="p-4">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Hey, Alex
-                  </p>{" "}
-                </div>
+                <p className="text-sm font-bold text-navy-700 dark:text-white">
+                  👋 Hey, {displayName}
+                </p>
+                {user?.email && (
+                  <p className="mt-1 truncate text-xs text-gray-600 dark:text-white/60">
+                    {user.email}
+                  </p>
+                )}
               </div>
               <div className="h-px w-full bg-gray-200 dark:bg-white/20 " />
 
               <div className="flex flex-col p-4">
-                <a
-                  href=" "
+                <Link
+                  to="/admin/profile"
                   className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
                 >
                   Profile Settings
-                </a>
-                <a
-                  href=" "
+                </Link>
+                <Link
+                  to="/admin/profile"
                   className="mt-3 text-sm text-gray-800 dark:text-white hover:dark:text-white"
                 >
                   Workspace Settings
-                </a>
-                <a
-                  href=" "
-                  className="mt-3 text-sm font-medium text-red-500 hover:text-red-500 transition duration-150 ease-out hover:ease-in"
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="mt-3 text-left text-sm font-medium text-red-500 transition duration-150 ease-out hover:ease-in"
                 >
-                  Log Out
-                </a>
+                  Sign out
+                </button>
               </div>
             </div>
           }
