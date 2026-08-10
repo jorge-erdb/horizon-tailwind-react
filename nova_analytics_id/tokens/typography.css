@@ -1,0 +1,23 @@
+:root {
+  --nova-font-display: 'Space Grotesk', 'Sora', system-ui, -apple-system, sans-serif;
+  --nova-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --nova-font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --nova-text-xs: 0.75rem;
+  --nova-text-sm: 0.875rem;
+  --nova-text-base: 1rem;
+  --nova-text-lg: 1.125rem;
+  --nova-text-xl: 1.5rem;
+  --nova-text-2xl: 2rem;
+  --nova-text-3xl: 2.75rem;
+
+  --nova-weight-regular: 400;
+  --nova-weight-medium: 500;
+  --nova-weight-bold: 700;
+}
+
+/* Usage
+  Display / headings   -> var(--nova-font-display), weight 500-700
+  Body / UI copy        -> var(--nova-font-body), weight 400-500
+  Metrics / tables / code -> var(--nova-font-mono), weight 400-500
+*/

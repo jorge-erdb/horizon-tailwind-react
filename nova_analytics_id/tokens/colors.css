@@ -1,0 +1,25 @@
+:root {
+  /* Brand */
+  --nova-indigo: #4F46E5;
+  --nova-indigo-dark: #3730A3;
+  --nova-indigo-darker: #1E1B4B;
+  --nova-spark: #22D3EE;
+  --nova-spark-light: #67E8F9;
+  --nova-amber: #F5A623;
+
+  /* Neutral */
+  --nova-ink: #0F172A;
+  --nova-gray-900: #0F172A;
+  --nova-gray-700: #334155;
+  --nova-gray-500: #64748B;
+  --nova-gray-300: #CBD3E1;
+  --nova-gray-100: #EEF1F6;
+  --nova-gray-50: #F8FAFC;
+  --nova-white: #FFFFFF;
+
+  /* Semantic */
+  --nova-success: #16A34A;
+  --nova-warning: #F59E0B;
+  --nova-danger: #DC2626;
+  --nova-info: #4F46E5;
+}

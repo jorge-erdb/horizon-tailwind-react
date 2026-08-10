@@ -1,0 +1,36 @@
+{
+  "brand": {
+    "indigo": { "value": "#4F46E5", "role": "Primary brand color — CTAs, links, active states" },
+    "indigo-dark": { "value": "#3730A3", "role": "Hover/pressed states, primary text on light" },
+    "indigo-darker": { "value": "#1E1B4B", "role": "Dark-mode surfaces, deep backgrounds" },
+    "spark": { "value": "#22D3EE", "role": "Accent — highlights, the 'nova' burst, data emphasis" },
+    "spark-light": { "value": "#67E8F9", "role": "Accent tint for hover/backgrounds" },
+    "amber": { "value": "#F5A623", "role": "Secondary accent — used sparingly for warmth/callouts" }
+  },
+  "neutral": {
+    "ink": { "value": "#0F172A", "role": "Primary text, dark-mode background" },
+    "gray-900": { "value": "#0F172A" },
+    "gray-700": { "value": "#334155", "role": "Secondary text" },
+    "gray-500": { "value": "#64748B", "role": "Muted text, subtitles" },
+    "gray-300": { "value": "#CBD3E1", "role": "Borders, dividers" },
+    "gray-100": { "value": "#EEF1F6", "role": "Subtle backgrounds, cards" },
+    "gray-50": { "value": "#F8FAFC", "role": "Page background" },
+    "white": { "value": "#FFFFFF" }
+  },
+  "semantic": {
+    "success": { "value": "#16A34A" },
+    "warning": { "value": "#F59E0B" },
+    "danger": { "value": "#DC2626" },
+    "info": { "value": "#4F46E5" }
+  },
+  "dataviz-categorical": [
+    "#4F46E5",
+    "#22D3EE",
+    "#F5A623",
+    "#16A34A",
+    "#DC2626",
+    "#8B5CF6",
+    "#0EA5E9",
+    "#64748B"
+  ]
+}
