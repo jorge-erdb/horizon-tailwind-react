@@ -10,17 +10,17 @@ const SidebarCard = () => {
 
       <div className="mt-14 flex h-fit flex-col items-center">
         <p className="font-display text-lg font-bold text-white">
-          Nova Insights
+          Connect a source
         </p>
         <p className="mt-1 px-5 text-center text-sm text-white/80">
-          Automatic anomaly detection across every metric you track.
+          Register where your numbers come from and track each one's health.
         </p>
 
         <Link
           className="mt-6 block rounded-full bg-white/15 py-3 px-10 text-center text-base font-medium text-white transition-colors hover:bg-white/25"
-          to="/admin/default"
+          to="/admin/data-tables"
         >
-          Explore
+          View sources
         </Link>
       </div>
     </div>

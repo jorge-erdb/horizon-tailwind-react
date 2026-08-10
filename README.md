@@ -213,10 +213,22 @@ Things worth knowing before this goes in front of anyone:
 - The profile page reads the real account, but the "Plan" and "Data
   residency" cards are still hardcoded copy — there are no columns behind
   them yet.
-- Landing-page copy — pricing, uptime, event volumes, "SOC 2 Type II" — is
-  **placeholder marketing copy that I invented**. Replace it with claims Nova
-  can actually stand behind before this is public. Compliance claims in
-  particular should not ship unreviewed.
+- **Landing page claims were audited and rewritten.** The original copy was
+  placeholder that asserted a "SOC 2 Type II" certification, "99.98% platform
+  uptime", "<400ms median query time", "5.7M events ingested daily" and "24
+  native integrations" — none measured, none true. Every feature claim now
+  describes behaviour that ships today.
+
+  Unbuilt capabilities live in the **"On the roadmap"** band in
+  `HowItWorks.jsx`, explicitly labelled as planned, and unbuilt plan features
+  carry a `planned: true` flag rendering a "Planned" chip in `Pricing.jsx`.
+  **Keep that boundary**: moving something into Features or dropping its chip
+  is a statement that it exists. SOC 2 in particular is a third-party audit
+  certification that enterprise buyers rely on — it stays in the roadmap until
+  Nova actually holds it.
+
+- Pricing figures ($0 / $390 / Custom) are intended pricing. There is no
+  billing integration and no event metering behind the quotas.
 
 **Build and tooling**
 

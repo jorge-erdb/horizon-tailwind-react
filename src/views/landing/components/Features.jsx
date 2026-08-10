@@ -1,42 +1,50 @@
 import {
-  MdAutoAwesome,
   MdBolt,
   MdGroups,
   MdInsights,
   MdLock,
-  MdSync,
+  MdStorage,
+  MdVerified,
 } from "react-icons/md";
 
+/**
+ * Every claim here describes behaviour that exists in the product today.
+ *
+ * Anything not yet built — event ingestion, anomaly detection, SSO, audit
+ * logs, SOC 2, data residency — belongs in the roadmap band in HowItWorks,
+ * where it is explicitly labelled as planned. Adding a capability here means
+ * it ships first.
+ */
 const features = [
   {
-    icon: MdSync,
-    title: "Every source, one model",
-    body: "Connect Postgres, Stripe, your product SDK and ad platforms. Nova reconciles them into a single event model — no warehouse project required.",
-  },
-  {
-    icon: MdBolt,
-    title: "Answers in seconds",
-    body: "Queries run against a columnar store tuned for event data. Cohorts and funnels over hundreds of millions of rows return before you lose your train of thought.",
-  },
-  {
-    icon: MdAutoAwesome,
-    title: "Anomalies find you",
-    body: "Nova watches every metric you track and tells you when something breaks its pattern — before it shows up in a monthly review.",
-  },
-  {
-    icon: MdInsights,
-    title: "Funnels and retention built in",
-    body: "Drop-off analysis, cohort retention and attribution ship as first-class views, not dashboards you have to assemble by hand.",
-  },
-  {
-    icon: MdGroups,
-    title: "Shared definitions",
-    body: "Define a metric once and every dashboard, alert and export uses it. When someone changes it, everyone sees the change and who made it.",
+    icon: MdVerified,
+    title: "One workspace, one set of numbers",
+    body: "Every chart, table and KPI reads from the same metric definitions. Two people looking at revenue see the same figure, because it is the same figure.",
   },
   {
     icon: MdLock,
-    title: "Governed by default",
-    body: "Row-level permissions, SSO, audit logs and EU or US data residency — set once at the workspace level and enforced everywhere.",
+    title: "Isolated at the database, not the app",
+    body: "Each workspace is separated by Postgres row-level security, enforced on every single query. A bug in application code cannot leak another tenant's rows.",
+  },
+  {
+    icon: MdInsights,
+    title: "A dashboard that arrives configured",
+    body: "Revenue trend, traffic by platform, conversion and source health land already wired to your workspace — not an empty canvas and a chart builder.",
+  },
+  {
+    icon: MdStorage,
+    title: "Every source in one register",
+    body: "Each connected source with its platforms, health and last sync in one view, so a pipeline that quietly stopped is visible now rather than at month end.",
+  },
+  {
+    icon: MdBolt,
+    title: "Reports and alerts, defined once",
+    body: "Capture the reports your team needs and the thresholds worth interrupting someone for. Scheduled delivery is on the roadmap; the definitions live in the workspace today.",
+  },
+  {
+    icon: MdGroups,
+    title: "Priced for the whole team",
+    body: "Invite everyone who needs the numbers. Membership and roles sit on the workspace, and you are never charged for another viewer.",
   },
 ];
 
@@ -53,8 +61,8 @@ const Features = () => {
           </h2>
           <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
             Most teams have plenty of data and no agreement on what it means.
-            Nova closes that gap with shared definitions, fast queries and
-            alerts that reach people before the damage does.
+            Nova closes that gap with shared definitions and a workspace
+            everyone reads from.
           </p>
         </div>
 

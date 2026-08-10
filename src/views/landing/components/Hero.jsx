@@ -1,7 +1,16 @@
 import { Link } from "react-router-dom";
 import { MdArrowForward, MdCheck } from "react-icons/md";
 
-const proofPoints = ["No credit card required", "14-day trial", "SOC 2 Type II"];
+// Every item here has to be true of the product as it ships today.
+// "SOC 2 Type II" used to sit in this list: it is a specific third-party
+// audit certification that Nova does not hold, and enterprise buyers make
+// purchasing decisions on it. It now appears only in the roadmap section,
+// labelled as planned.
+const proofPoints = [
+  "No credit card required",
+  "14-day trial",
+  "Isolated workspace per team",
+];
 
 const sparkline = [38, 52, 44, 61, 57, 74, 69, 88, 82, 96];
 
@@ -24,7 +33,7 @@ const Hero = () => {
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-accent-300">
             <span className="h-1.5 w-1.5 rounded-full bg-accent-500" />
-            Real-time pipelines now in beta
+            Now in early access
           </span>
 
           <h1 className="mt-6 font-display text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -33,9 +42,9 @@ const Hero = () => {
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
-            Nova Analytics unifies product, marketing and revenue data in one
-            workspace — so your team stops arguing about the numbers and starts
-            acting on them.
+            One workspace for your product, marketing and revenue numbers —
+            with the same definitions behind every chart, so your team stops
+            arguing about whose figure is right.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">

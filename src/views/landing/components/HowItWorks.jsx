@@ -1,26 +1,47 @@
 const steps = [
   {
     step: "01",
-    title: "Connect your sources",
-    body: "Point Nova at your database, Stripe account and product SDK. First sync typically completes in under an hour.",
+    title: "Create your workspace",
+    body: "Sign up and you get an isolated workspace with a dashboard already wired to it. No setup call, no onboarding project.",
   },
   {
     step: "02",
     title: "Agree on the metrics",
-    body: "Define activation, churn and MRR once. Every chart, alert and export in the workspace reads from those definitions.",
+    body: "Name what you measure once. Every chart, report and alert in the workspace reads from those definitions rather than its own copy.",
   },
   {
     step: "03",
-    title: "Act on what changes",
-    body: "Nova surfaces movement worth your attention and routes it to the people who own it, in Slack or email.",
+    title: "Bring the team in",
+    body: "Invite everyone who argues about the numbers. They see the same figures, with the same definitions behind them.",
   },
 ];
 
-const stats = [
-  { value: "5.7M", label: "events ingested daily" },
-  { value: "<400ms", label: "median query time" },
-  { value: "24", label: "native integrations" },
-  { value: "99.98%", label: "platform uptime" },
+/**
+ * This band replaced a stats strip that claimed "5.7M events ingested daily",
+ * "<400ms median query time", "24 native integrations" and "99.98% platform
+ * uptime". None of those were measured or true, and an uptime figure in
+ * particular reads as an SLA.
+ *
+ * Everything below is explicitly future work. Keep it that way: an item only
+ * moves out of this list and into Features once it actually ships.
+ */
+const roadmap = [
+  {
+    title: "Event ingestion API",
+    body: "A write key per source, so Nova collects your events directly.",
+  },
+  {
+    title: "SSO and audit logs",
+    body: "SAML sign-in and a record of who changed which definition.",
+  },
+  {
+    title: "SOC 2 Type II",
+    body: "Not yet certified. On the path, not a claim we make today.",
+  },
+  {
+    title: "EU / US data residency",
+    body: "Choose where a workspace's data is stored and processed.",
+  },
 ];
 
 const HowItWorks = () => {
@@ -53,19 +74,34 @@ const HowItWorks = () => {
           ))}
         </ol>
 
-        <dl className="mt-16 grid grid-cols-2 gap-6 rounded-primary bg-white p-8 shadow-3xl shadow-shadow-500 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <dt className="sr-only">{stat.label}</dt>
-              <dd>
-                <p className="font-mono text-2xl font-bold text-brand-500 sm:text-3xl">
-                  {stat.value}
+        {/* Roadmap — deliberately separated from anything we claim today. */}
+        <div className="mt-16 rounded-primary bg-white p-8 shadow-3xl shadow-shadow-500">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h3 className="font-display text-lg font-bold text-navy-700">
+              On the roadmap
+            </h3>
+            <p className="text-sm text-gray-600">
+              Not available yet — listed so you can judge whether Nova is going
+              where you need it to.
+            </p>
+          </div>
+
+          <ul className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {roadmap.map((item) => (
+              <li key={item.title}>
+                <span className="inline-flex rounded-full bg-amber-500/15 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                  Planned
+                </span>
+                <p className="mt-3 font-display text-base font-bold text-navy-700">
+                  {item.title}
                 </p>
-                <p className="mt-1 text-sm text-gray-600">{stat.label}</p>
-              </dd>
-            </div>
-          ))}
-        </dl>
+                <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                  {item.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

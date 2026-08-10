@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import { MdCheck } from "react-icons/md";
 
+/**
+ * `planned: true` renders a "Planned" chip. Anything not yet built must carry
+ * it — a plan tier that silently lists SSO alongside shipped features reads as
+ * a statement of what you get today.
+ */
 const plans = [
   {
     name: "Starter",
@@ -8,10 +13,10 @@ const plans = [
     cadence: "for 14 days",
     blurb: "Everything you need to see whether Nova fits.",
     features: [
-      "Up to 3 data sources",
-      "1M events / month",
-      "Unlimited dashboards",
-      "Email support",
+      { label: "Up to 3 data sources" },
+      { label: "Unlimited dashboards" },
+      { label: "Unlimited team members" },
+      { label: "Email support" },
     ],
     cta: "Start free",
     featured: false,
@@ -22,11 +27,11 @@ const plans = [
     cadence: "per month",
     blurb: "For teams running the business on their numbers.",
     features: [
-      "Unlimited data sources",
-      "50M events / month",
-      "Anomaly detection & alerts",
-      "SSO and audit logs",
-      "Priority support",
+      { label: "Unlimited data sources" },
+      { label: "Alert thresholds" },
+      { label: "Scheduled report delivery", planned: true },
+      { label: "SSO and audit logs", planned: true },
+      { label: "Priority support" },
     ],
     cta: "Start free trial",
     featured: true,
@@ -37,10 +42,10 @@ const plans = [
     cadence: "annual",
     blurb: "Governance, residency and volume on your terms.",
     features: [
-      "Custom event volume",
-      "EU or US data residency",
-      "Row-level permissions",
-      "Dedicated success manager",
+      { label: "Workspace isolation (row-level security)" },
+      { label: "Custom event volume", planned: true },
+      { label: "EU or US data residency", planned: true },
+      { label: "Dedicated success manager" },
     ],
     cta: "Talk to sales",
     featured: false,
@@ -113,7 +118,7 @@ const Pricing = () => {
 
               <ul className="mt-7 flex-1 space-y-3">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5">
+                  <li key={feature.label} className="flex items-start gap-2.5">
                     <MdCheck
                       className={`mt-0.5 h-4 w-4 shrink-0 ${
                         plan.featured ? "text-accent-300" : "text-brand-500"
@@ -124,7 +129,18 @@ const Pricing = () => {
                         plan.featured ? "text-white/85" : "text-gray-600"
                       }`}
                     >
-                      {feature}
+                      {feature.label}
+                      {feature.planned && (
+                        <span
+                          className={`ml-2 inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${
+                            plan.featured
+                              ? "bg-white/15 text-accent-300"
+                              : "bg-amber-500/15 text-amber-700"
+                          }`}
+                        >
+                          Planned
+                        </span>
+                      )}
                     </span>
                   </li>
                 ))}

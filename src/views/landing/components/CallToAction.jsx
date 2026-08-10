@@ -15,7 +15,7 @@ const CallToAction = () => {
               Stop reconciling spreadsheets. Start reading the business.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-white/75 sm:text-lg">
-              Create your workspace in a couple of minutes. Connect a source
+              Create your workspace in under a minute, and bring the team in
               whenever you're ready.
             </p>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
