@@ -64,7 +64,7 @@ const Dashboard = () => {
       {/* Tables & Charts */}
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-        {/* Check Table */}
+        {/* Data sources table */}
         <div>
           <CheckTable
             columnsData={columnsDataCheck}
@@ -79,7 +79,7 @@ const Dashboard = () => {
           <PieChartCard />
         </div>
 
-        {/* Complex Table , Task & Calendar */}
+        {/* Scheduled reports */}
 
         <ComplexTable
           columnsData={columnsDataComplex}

@@ -104,7 +104,7 @@ export const barChartOptionsDailyTraffic = {
 
 export const pieChartOptions = {
   labels: ["Web", "Mobile", "API"],
-  colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
+  colors: ["#4F46E5", "#22D3EE", "#F5A623"],
   chart: {
     width: "50px",
   },
@@ -133,7 +133,7 @@ export const pieChartOptions = {
     },
   },
   fill: {
-    colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
+    colors: ["#4F46E5", "#22D3EE", "#F5A623"],
   },
   tooltip: {
     enabled: true,
@@ -162,7 +162,7 @@ export const barChartDataWeeklyRevenue = [
   {
     name: "Services",
     data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#EEF1F6",
+    color: "#F5A623",
   },
 ];
 
@@ -238,12 +238,12 @@ export const barChartOptionsWeeklyRevenue = {
   },
   fill: {
     type: "solid",
-    colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
+    colors: ["#4F46E5", "#22D3EE", "#F5A623"],
   },
   legend: {
     show: false,
   },
-  colors: ["#4F46E5", "#22D3EE", "#EEF1F6"],
+  colors: ["#4F46E5", "#22D3EE", "#F5A623"],
   dataLabels: {
     enabled: false,
   },
