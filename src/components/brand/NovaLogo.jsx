@@ -107,7 +107,7 @@ const NovaLogo = ({
         Nova
       </text>
       <text
-        x="185"
+        x="192"
         y="58"
         fontFamily="'Space Grotesk', 'Sora', system-ui, sans-serif"
         fontWeight="500"
