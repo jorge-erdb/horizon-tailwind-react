@@ -75,11 +75,21 @@ Notes:
      establishes the session and forwards into the dashboard.
    - **Off**: sign-up returns a session immediately and goes straight to the
      dashboard.
-6. **Run the database migration**: paste `supabase/migrations/0001_profiles.sql`
-   into the SQL Editor and run it. It creates `public.profiles`, enables RLS
-   with owner-only policies, and adds a trigger that creates a profile row on
-   signup. Without it the app still works, but the profile page falls back to
-   session data and the console warns.
+6. **Run the database migrations**: paste each file in
+   `supabase/migrations/` into the SQL Editor **in numeric order** and run it.
+   They are idempotent, so re-running is safe.
+
+   | Migration | What it adds |
+   | --- | --- |
+   | `0001_profiles` | `profiles`, RLS, profile-on-signup trigger |
+   | `0002_workspaces` | `workspaces`, `workspace_members`, `workspace_invites`, membership helpers, workspace-on-signup |
+   | `0003_domain` | `data_sources`, `reports`, `alerts`, `tasks`, `notifications` |
+   | `0004_metrics` | `events` (phase 5) and `metric_points` + `get_metric_series` |
+   | `0005_rpc` | `get_dashboard_kpis` |
+   | `0006_seed` | `seed_workspace_demo_data`, then seeds existing workspaces |
+
+   Verify them locally first with `./supabase/tests/run-migration-tests.sh`
+   (see Testing below).
 7. Supabase's built-in SMTP is heavily rate-limited (a few messages per hour)
    and intended only for testing. Configure your own SMTP before any real
    signup volume.
@@ -117,9 +127,11 @@ src/
     landing/              Marketing page and its sections
     auth/                 SignIn, SignUp, AuthCallback, ResetPassword
     admin/                Dashboard, data tables, profile
-  routes.js               Sidebar + router route table
-supabase/migrations/      SQL to run in the Supabase SQL Editor
+  routes/                 adminRoutes (sidebar nav) + authRoutes
+supabase/migrations/      SQL to run in the Supabase SQL Editor, in order
+supabase/tests/           Dockerised migration test harness
 tailwind.config.js        Nova design tokens
+vercel.json               SPA rewrite, caching, security headers
 ```
 
 ### Design tokens
@@ -141,6 +153,36 @@ custom property (`--nova-indigo`, `--nova-font-body`, …).
 The brand kit specifies anchor values, not full ramps. Intermediate steps
 (`primary` 50–400, `neutral` 200/400/600/800, `accent` 600–900) are
 interpolated in `tailwind.config.js` and marked as such in comments.
+
+---
+
+## Testing
+
+```bash
+./supabase/tests/run-migration-tests.sh    # requires Docker
+```
+
+Spins up a throwaway Postgres, installs a minimal Supabase shim (the `auth`
+schema, `auth.uid()`, the `anon`/`authenticated` roles), applies every
+migration **twice** to prove idempotency, then asserts behaviour:
+
+- signup creates a profile, a workspace and an owner membership, with the
+  display name taken from metadata and falling back to the email local part
+- slug collisions between identically-named workspaces resolve
+- the demo seed does not duplicate rows when re-run
+- **tenant isolation** — a second user's rows are invisible across every
+  table, and `get_dashboard_kpis` refuses a workspace the caller is not a
+  member of
+- the KPI tile values are plausible and agree with the table beneath them
+- an unseeded workspace returns zeros rather than nulls or an error
+
+Isolation is the reason this exists. A mistaken RLS policy does not raise an
+error — it silently returns rows, so "the migration ran fine" proves nothing.
+The suite is checked against a deliberately broken policy (`using (true)`) to
+confirm it actually fails when isolation breaks, rather than passing
+vacuously.
+
+Nothing here touches your Supabase project.
 
 ---
 
@@ -178,9 +220,9 @@ Things worth knowing before this goes in front of anyone:
 
 **Build and tooling**
 
-- No tests and no test runner. `@testing-library` packages are still
-  installed from the CRA era but nothing runs them — Vitest is the natural
-  fit alongside Vite.
+- No frontend tests and no JS test runner. `@testing-library` packages are
+  still installed from the CRA era but nothing runs them — Vitest is the
+  natural fit alongside Vite. The SQL layer *is* covered, see Testing.
 - The dashboard chunk is ~169 KB gzipped, almost all ApexCharts. It is
   already split away from the landing and auth bundles, but swapping to a
   lighter chart library would matter more than any further splitting.
