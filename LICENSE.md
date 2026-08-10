@@ -1,6 +1,11 @@
 MIT License
 
+Copyright (c) 2026 Nova Analytics
 Copyright (c) 2023 Horizon UI
+
+This product is derived from Horizon UI Tailwind React, which is distributed
+under the MIT License. The original copyright notice above is retained as that
+license requires; it must not be removed.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
