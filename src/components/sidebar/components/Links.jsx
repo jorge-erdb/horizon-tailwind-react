@@ -17,11 +17,10 @@ export function SidebarLinks(props) {
 
   const createLinks = (routes) => {
     return routes.map((route, index) => {
-      if (
-        route.layout === "/admin" ||
-        route.layout === "/auth" ||
-        route.layout === "/rtl"
-      ) {
+      if (route.hideInSidebar) {
+        return null;
+      }
+      if (route.layout === "/admin" || route.layout === "/auth") {
         return (
           <Link key={index} to={route.layout + "/" + route.path}>
             <div className="relative mb-3 flex hover:cursor-pointer">
@@ -55,6 +54,7 @@ export function SidebarLinks(props) {
           </Link>
         );
       }
+      return null;
     });
   };
   // BRAND
