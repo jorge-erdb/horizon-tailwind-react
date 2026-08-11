@@ -31,6 +31,16 @@ begin
     raise exception 'FAIL: signup did not create a default workspace';
   end if;
 
+  -- Stash Bob's workspace id for the isolation block below, which runs as
+  -- `authenticated`. Resolving it there instead is the obvious thing to do and
+  -- it is wrong: workspace_members' own select policy hides Bob's row from
+  -- Alice, so the lookup returns NULL, every `where workspace_id = bob_ws`
+  -- predicate evaluates to NULL, and the resulting zero row counts pass the
+  -- assertions without testing anything. set_config(..., true) is
+  -- transaction-local and the file runs under --single-transaction, so this
+  -- lives exactly as long as it should.
+  perform set_config('nova.test_bob_ws', bob_ws::text, true);
+
   perform 1 from public.workspace_members
     where user_id = alice and workspace_id = alice_ws and role = 'owner';
   if not found then
@@ -66,9 +76,15 @@ declare
   bob_ws uuid;
   n      bigint;
   ok     boolean;
+  tbl    text;
 begin
-  select m.workspace_id into bob_ws from public.workspace_members m
-   where m.user_id = '22222222-2222-4222-8222-222222222222';
+  bob_ws := nullif(current_setting('nova.test_bob_ws', true), '')::uuid;
+
+  -- A NULL here would silently defeat every foreign-tenant check below, so
+  -- refuse to run rather than report a meaningless pass.
+  if bob_ws is null then
+    raise exception 'FAIL: bob_ws unavailable; foreign-tenant checks would be vacuous';
+  end if;
 
   select count(*) into n from public.workspaces;
   if n <> 1 then raise exception 'FAIL: leaked workspaces (saw %, expected 1)', n; end if;
@@ -82,6 +98,41 @@ begin
   select count(*) into n from public.data_sources where workspace_id = bob_ws;
   if n <> 0 then raise exception 'FAIL: read % of another tenant''s data_sources', n; end if;
 
+  -- The remaining workspace-scoped tables. Every one of these renders on a
+  -- page a reviewer can reach, and each had RLS and policies but no proof.
+  -- Both halves matter: the distinct-count catches a policy that leaks every
+  -- tenant, the direct read catches one that leaks a specific foreign tenant.
+  -- The seed populates all of these for both tenants (0006_seed.sql:56,70,85,
+  -- 100 and 0009_costs.sql:251), so neither check passes against empty tables.
+  foreach tbl in array array['reports', 'alerts', 'tasks', 'notifications', 'workspace_costs']
+  loop
+    execute format('select count(distinct workspace_id) from public.%I', tbl) into n;
+    if n <> 1 then
+      raise exception 'FAIL: leaked % across % workspaces', tbl, n;
+    end if;
+
+    execute format('select count(*) from public.%I where workspace_id = $1', tbl)
+      into n using bob_ws;
+    if n <> 0 then
+      raise exception 'FAIL: read % of another tenant''s %', n, tbl;
+    end if;
+  end loop;
+
+  -- profiles is the consequential one: it holds PII, and its select policy
+  -- (0001_profiles.sql) is `auth.uid() = id` -- strictly self, not co-members.
+  -- So Alice must see exactly her own row and nobody else's.
+  select count(*) into n from public.profiles;
+  if n <> 1 then raise exception 'FAIL: profiles leaked (saw % rows, expected 1)', n; end if;
+
+  select count(*) into n from public.profiles
+   where id = '22222222-2222-4222-8222-222222222222';
+  if n <> 0 then raise exception 'FAIL: read another user''s profile row'; end if;
+
+  -- Invites carry an email address and a token that grants membership; a leak
+  -- here is both a PII leak and an escalation path.
+  select count(*) into n from public.workspace_invites where workspace_id = bob_ws;
+  if n <> 0 then raise exception 'FAIL: read % of another tenant''s invites', n; end if;
+
   -- The KPI RPC must refuse a workspace the caller is not a member of.
   ok := false;
   begin
@@ -91,7 +142,7 @@ begin
   end;
   if not ok then raise exception 'FAIL: get_dashboard_kpis returned another tenant''s data'; end if;
 
-  raise notice 'PASS: tenant isolation (tables + RPC)';
+  raise notice 'PASS: tenant isolation (every workspace-scoped table, profiles, invites, RPC)';
 end $$;
 
 -- --- KPI shape --------------------------------------------------------------
