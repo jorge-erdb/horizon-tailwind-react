@@ -14,16 +14,17 @@ authentication, and a whitelabeled analytics dashboard.
 
 ## Reviewing this project
 
-**The reviewer workspace is empty on purpose, and filling it takes about
-thirty seconds.**
+The reviewer account opens on a populated dashboard: about ninety days of
+history, six data sources, and the reports, alerts and tasks the tables read
+from.
 
-Signing in shows a dashboard of zeros. Nothing is broken. No data is seeded on
-signup — a new account gets a new workspace, and a new workspace is a new
-tenant with nothing in it. Handing every reviewer a pre-populated dashboard
-would have meant seeding fake rows and calling them a demo, which proves
-nothing about whether the pipeline works.
+**That history is seeded, and it is worth saying so plainly.** It exists so
+there is something to look at, and it demonstrates nothing about whether the
+system works — any project can `insert` a nice-looking chart. Seeded rows and
+ingested rows land in the same `metric_points` table and the UI cannot tell
+them apart, which is what lets one workspace carry both at once.
 
-Making it move is the demo. In the app:
+So the part worth thirty seconds is watching a real event arrive on top of it.
 
 1. **Data Tables → Connect a source.** Name it anything; set **Kind** to
    `billing`.
@@ -34,22 +35,15 @@ Making it move is the demo. In the app:
    `{"accepted":1}`.
 4. Go back to the dashboard and **wait about fifteen seconds. Do not reload.**
 
-Revenue, Events Tracked and the revenue bars all move on their own. That is a
-real event travelling through the Edge Function, into `events`, through the
-rollup into `metric_points`, and back out to a chart — not a seeded row and not
-a refresh.
-
-The **profit line stays absent**, and that is also correct. Profit is computed
-from a cost basis in `workspace_costs`, and a workspace that has never declared
-what it costs to run gets no profit series rather than a profit equal to
-revenue. "We have not said what this costs" and "this costs nothing" are
-different claims, and only one of them is true here — see
-[Profit and the cost model](#profit-and-the-cost-model).
+Revenue, Events Tracked and today's bar move on their own, with the seeded
+history still sitting underneath. That is a real event travelling through the
+Edge Function, into `events`, through the rollup into `metric_points`, and back
+out to a chart — no refresh, and nothing pre-written.
 
 Change the **Kind** and the generated command changes with it: `web` sends a
 `page_view` that moves Visitors and the hourly traffic chart, `api` sends a
-`session_start` that adds a slice to Sessions by platform. Each one says which
-chart it feeds, or plainly that it feeds none — see
+`session_start` that adds a slice to Sessions by platform. Each one states
+which chart it feeds, or plainly that it feeds none — see
 [the event contract](#the-event-contract) for why only four event names drive
 charts.
 
@@ -58,6 +52,21 @@ other account — write keys resolve to exactly one workspace, and every table i
 read through RLS policies asserted in `supabase/tests/`. And the rollup is
 additive: run the command twice in the same hour and the totals grow rather
 than the second run replacing the first.
+
+### If you sign up for your own account instead
+
+You will get an empty dashboard, and that is correct rather than broken.
+Nothing is seeded on signup — a new account gets a new workspace, and a new
+workspace is a new tenant with nothing in it. The walkthrough above is exactly
+how you fill it.
+
+One difference worth knowing: the **profit line will be absent** there. Profit
+is computed from a cost basis in `workspace_costs`, which the reviewer
+workspace has and a fresh signup does not, so a workspace that has never
+declared what it costs to run gets no profit series rather than a profit equal
+to revenue. "We have not said what this costs" and "this costs nothing" are
+different claims — see
+[Profit and the cost model](#profit-and-the-cost-model).
 
 ---
 
