@@ -2,30 +2,14 @@ import React from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { BsArrowBarUp, BsGraphUpArrow } from "react-icons/bs";
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
-import {
-  IoMdNotificationsOutline,
-  IoMdInformationCircleOutline,
-} from "react-icons/io";
+import { IoMdInformationCircleOutline } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import NovaLogo from "components/brand/NovaLogo";
+import NotificationsMenu from "components/navbar/NotificationsMenu";
 import { useAuth } from "contexts/AuthContext";
 import avatar from "assets/img/avatars/avatar4.png";
-
-const notifications = [
-  {
-    icon: BsGraphUpArrow,
-    title: "Signup conversion is up 12%",
-    body: "Week over week, driven by the paid-search segment.",
-  },
-  {
-    icon: BsArrowBarUp,
-    title: "Weekly report is ready",
-    body: "Your Nova Analytics summary for last week has been generated.",
-  },
-];
 
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;
@@ -92,43 +76,7 @@ const Navbar = (props) => {
           <FiAlignJustify className="h-5 w-5" />
         </span>
         {/* start Notification */}
-        <Dropdown
-          button={
-            <p className="cursor-pointer">
-              <IoMdNotificationsOutline className="h-4 w-4 text-gray-600 dark:text-white" />
-            </p>
-          }
-          animation="origin-[65%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
-          children={
-            <div className="flex w-[360px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none sm:w-[460px]">
-              <div className="flex items-center justify-between">
-                <p className="text-base font-bold text-navy-700 dark:text-white">
-                  Notification
-                </p>
-                <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  Mark all read
-                </p>
-              </div>
-
-              {notifications.map((item) => (
-                <button key={item.title} className="flex w-full items-center">
-                  <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-nova-spark py-4 text-2xl text-white">
-                    <item.icon />
-                  </div>
-                  <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
-                    <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                      {item.title}
-                    </p>
-                    <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                      {item.body}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          }
-          classNames={"py-2 top-4 -left-[230px] md:-left-[440px] w-max"}
-        />
+        <NotificationsMenu />
         {/* start Help & resources */}
         <Dropdown
           button={

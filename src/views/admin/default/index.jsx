@@ -24,17 +24,8 @@ import {
   formatCompact,
   formatCount,
   formatPercent,
-  formatDate,
 } from "lib/format";
-
-// reports.status is lower case in the database; ComplexTable switches on these
-// exact capitalised strings to pick its icon. Mapped explicitly rather than
-// title-casing, because 'disabled' has to become 'Disable' to match.
-const REPORT_STATUS = {
-  approved: "Approved",
-  disabled: "Disable",
-  error: "Error",
-};
+import { toCheckRows, toReportRows } from "lib/tableRows";
 
 const Dashboard = () => {
   const kpis = useDashboardKpis(30);
@@ -45,26 +36,11 @@ const Dashboard = () => {
   const kpiLoading = kpis.isPending;
 
   const checkTableData = useMemo(
-    () =>
-      (dataSources.data ?? []).map((source) => ({
-        // CheckTable renders `name` as a [label, checked] tuple; the checkbox
-        // reflects whether the source is actively reporting.
-        name: [source.name, source.status === "active"],
-        progress: Number(source.health_pct),
-        quantity: Number(source.events_30d),
-        date: formatDate(source.last_sync_at),
-      })),
+    () => toCheckRows(dataSources.data),
     [dataSources.data]
   );
-
   const complexTableData = useMemo(
-    () =>
-      (reports.data ?? []).map((report) => ({
-        name: report.name,
-        status: REPORT_STATUS[report.status] ?? "Error",
-        date: formatDate(report.last_run_at),
-        progress: Number(report.completion),
-      })),
+    () => toReportRows(reports.data),
     [reports.data]
   );
 
