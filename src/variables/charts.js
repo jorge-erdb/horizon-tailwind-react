@@ -1,9 +1,28 @@
-export const barChartDataDailyTraffic = [
-  {
-    name: "Daily Traffic",
-    data: [20, 30, 40, 20, 45, 50, 30],
-  },
-];
+/**
+ * Chart *presentation* only — palette, fonts, axis styling.
+ *
+ * The series used to live here too, as fixtures. They now come from
+ * metric_points via src/lib/queries/metrics.js, so anything resembling data
+ * has been removed: a leftover fixture export is the kind of thing a card
+ * silently falls back to, and a dashboard showing convincing hardcoded
+ * numbers is worse than one showing none.
+ *
+ * Category axes move with the data (a workspace seeded last week has fewer
+ * buckets than one seeded last year), so options carry an empty `categories`
+ * and every consumer merges the real one through `withCategories`.
+ */
+
+/**
+ * Returns options with the x-axis categories replaced.
+ *
+ * Apex mutates the options object it is handed in some code paths, so this
+ * builds a new object rather than assigning into the shared export — two
+ * cards reading the same options export would otherwise fight over the axis.
+ */
+export const withCategories = (options, categories) => ({
+  ...options,
+  xaxis: { ...options.xaxis, categories },
+});
 
 export const barChartOptionsDailyTraffic = {
   chart: {
@@ -26,7 +45,7 @@ export const barChartOptionsDailyTraffic = {
     theme: "dark",
   },
   xaxis: {
-    categories: ["00", "04", "08", "12", "14", "16", "18"],
+    categories: [],
     show: false,
     labels: {
       show: true,
@@ -146,26 +165,6 @@ export const pieChartOptions = {
   },
 };
 
-export const pieChartData = [63, 25, 12];
-
-export const barChartDataWeeklyRevenue = [
-  {
-    name: "Subscriptions",
-    data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#22D3EE",
-  },
-  {
-    name: "Usage-based",
-    data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#4F46E5",
-  },
-  {
-    name: "Services",
-    data: [400, 370, 330, 390, 320, 350, 360, 320, 380],
-    color: "#F5A623",
-  },
-];
-
 export const barChartOptionsWeeklyRevenue = {
   chart: {
     stacked: true,
@@ -188,7 +187,7 @@ export const barChartOptionsWeeklyRevenue = {
     },
   },
   xaxis: {
-    categories: ["17", "18", "19", "20", "21", "22", "23", "24", "25"],
+    categories: [],
     show: false,
     labels: {
       show: true,
@@ -255,23 +254,16 @@ export const barChartOptionsWeeklyRevenue = {
   },
 };
 
-export const lineChartDataTotalSpent = [
-  {
-    name: "Revenue",
-    data: [50, 64, 48, 66, 49, 68],
-    color: "#4F46E5",
-  },
-  {
-    name: "Profit",
-    data: [30, 40, 24, 46, 20, 46],
-    color: "#22D3EE",
-  },
-];
-
 export const lineChartOptionsTotalSpent = {
   legend: {
     show: false,
   },
+
+  // Revenue, then Profit. These used to ride on the series objects; with the
+  // series coming from the database the palette has to live here, and
+  // useRevenueTrend returns the two in this fixed order so the colours stay
+  // put even in a workspace that has profit rows but no revenue rows.
+  colors: ["#4F46E5", "#22D3EE"],
 
   theme: {
     mode: "light",
@@ -321,7 +313,7 @@ export const lineChartOptionsTotalSpent = {
     },
     type: "text",
     range: undefined,
-    categories: ["SEP", "OCT", "NOV", "DEC", "JAN", "FEB"],
+    categories: [],
   },
 
   yaxis: {

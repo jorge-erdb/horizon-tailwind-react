@@ -74,13 +74,22 @@ export function useRevenueTrend(months = 12) {
           data: entry.data.slice(start),
         }));
 
+      const revenue = trimmed.find((entry) => entry.name === "Revenue")?.data;
+
       return {
         categories: buckets.slice(start).map(monthLabel),
         series: trimmed,
-        total:
-          trimmed
-            .find((entry) => entry.name === "Revenue")
-            ?.data.reduce((sum, value) => sum + value, 0) ?? 0,
+        total: revenue?.reduce((sum, value) => sum + value, 0) ?? 0,
+        // Month over month on the last two buckets. Null rather than 0 when
+        // there is only one month of history: no previous period means no
+        // basis for comparison, and a "+0.00%" there reads as "flat" when the
+        // truth is "unknown".
+        deltaPct:
+          revenue && revenue.length >= 2 && revenue[revenue.length - 2] > 0
+            ? ((revenue[revenue.length - 1] - revenue[revenue.length - 2]) /
+                revenue[revenue.length - 2]) *
+              100
+            : null,
       };
     },
     { keyExtras: [months] }
