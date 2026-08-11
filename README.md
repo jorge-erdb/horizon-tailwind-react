@@ -110,6 +110,8 @@ disabled submit buttons rather than crashing.
 | Styling | Tailwind CSS 3 | Inherited, and the brand kit maps onto a token-based utility system almost directly. |
 | Charts | ApexCharts via `react-apexcharts` | Inherited. Colors now come from the brand kit's `dataviz-categorical` palette. |
 | Auth | Supabase Auth (`@supabase/supabase-js` v2) | Requested. Hosted email/password with session persistence and refresh handled for us — no backend to run. |
+| Server state | `@tanstack/react-query` | Every dashboard number is remote state with caching, staleness and refetch concerns. `@tanstack/react-table` was already a dependency, so this is the same family. |
+| Tests | Vitest | Reuses `vite.config.mjs`, so the `src`-rooted import aliases work in tests without a second resolver config. |
 | Icons | `react-icons` | Inherited. |
 
 ### Where things live
@@ -121,8 +123,14 @@ src/
   components/
     auth/ProtectedRoute   Session gate for /admin/*
     brand/NovaLogo        Inline-SVG logo (mark | horizontal | stacked)
+    common/QueryState     Shared loading / empty / error states for data cards
   contexts/AuthContext    Session + profile state, all auth actions
+  contexts/WorkspaceContext  Resolves the active workspace and its memberships
   lib/supabase.js         Supabase client, reads env vars
+  lib/queryClient.js      react-query defaults (retry policy, staleness)
+  lib/queries/            One module per entity; every query is workspace-scoped
+    base.js               Shared hooks: enable-when-ready, error unwrapping
+    shape.js              Pure metric_points -> chart-series transforms
   views/
     landing/              Marketing page and its sections
     auth/                 SignIn, SignUp, AuthCallback, ResetPassword
@@ -159,8 +167,29 @@ interpolated in `tailwind.config.js` and marked as such in comments.
 ## Testing
 
 ```bash
-./supabase/tests/run-migration-tests.sh    # requires Docker
+npm test                                   # Vitest — unit tests
+./supabase/tests/run-migration-tests.sh    # requires Docker — schema + RLS
 ```
+
+### Unit tests
+
+`src/lib/queries/__tests__/` covers `shape.js`, the pure transforms that turn
+`metric_points` rows into chart series. That is the only real logic in the
+data layer — everything else is a `select` — and its failure mode is silent: a
+chart that renders happily with points attached to the wrong day.
+
+The fixture is real output from `0006_seed.sql`, captured from the same
+throwaway Postgres the migration tests use. It is there because PostgREST
+returns metric rows *interleaved*, not grouped by series, and hand-written
+rows would have missed that.
+
+One caveat worth knowing: the seeded data is complete — every series has a
+value in every bucket — so the fixture tests cannot detect a misalignment bug
+on their own. Replacing the bucket-indexed fill with a naive per-series
+`push()` fails exactly one test, the synthetic gap case. That test is doing
+the load-bearing work; the fixture tests guard shape and ordering.
+
+### Migration tests
 
 Spins up a throwaway Postgres, installs a minimal Supabase shim (the `auth`
 schema, `auth.uid()`, the `anon`/`authenticated` roles), applies every
@@ -175,6 +204,8 @@ migration **twice** to prove idempotency, then asserts behaviour:
   member of
 - the KPI tile values are plausible and agree with the table beneath them
 - an unseeded workspace returns zeros rather than nulls or an error
+- RPC execute grants are scoped to `authenticated`, not `anon` (see
+  `0007_function_grants.sql`)
 
 Isolation is the reason this exists. A mistaken RLS policy does not raise an
 error — it silently returns rows, so "the migration ran fine" proves nothing.

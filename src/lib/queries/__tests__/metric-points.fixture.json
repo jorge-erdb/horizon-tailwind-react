@@ -1,0 +1,735 @@
+{
+  "monthly": [
+    {
+      "bucket": "2026-05-01T00:00:00Z",
+      "metric_key": "revenue",
+      "value": 119874
+    },
+    {
+      "bucket": "2026-05-01T00:00:00Z",
+      "metric_key": "profit",
+      "value": 50347
+    },
+    {
+      "bucket": "2026-06-01T00:00:00Z",
+      "metric_key": "profit",
+      "value": 100433
+    },
+    {
+      "bucket": "2026-06-01T00:00:00Z",
+      "metric_key": "revenue",
+      "value": 239126
+    },
+    {
+      "bucket": "2026-07-01T00:00:00Z",
+      "metric_key": "revenue",
+      "value": 293207
+    },
+    {
+      "bucket": "2026-07-01T00:00:00Z",
+      "metric_key": "profit",
+      "value": 123147
+    },
+    {
+      "bucket": "2026-08-01T00:00:00Z",
+      "metric_key": "revenue",
+      "value": 110366
+    },
+    {
+      "bucket": "2026-08-01T00:00:00Z",
+      "metric_key": "profit",
+      "value": 46354
+    }
+  ],
+  "streams": [
+    {
+      "bucket": "2026-08-05T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 7203
+    },
+    {
+      "bucket": "2026-08-05T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 1217
+    },
+    {
+      "bucket": "2026-08-05T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 3017
+    },
+    {
+      "bucket": "2026-08-06T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 1222
+    },
+    {
+      "bucket": "2026-08-06T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 3031
+    },
+    {
+      "bucket": "2026-08-06T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 7236
+    },
+    {
+      "bucket": "2026-08-07T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 3045
+    },
+    {
+      "bucket": "2026-08-07T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 7268
+    },
+    {
+      "bucket": "2026-08-07T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 1228
+    },
+    {
+      "bucket": "2026-08-08T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 1988
+    },
+    {
+      "bucket": "2026-08-08T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 4746
+    },
+    {
+      "bucket": "2026-08-08T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 802
+    },
+    {
+      "bucket": "2026-08-09T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 805
+    },
+    {
+      "bucket": "2026-08-09T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 1997
+    },
+    {
+      "bucket": "2026-08-09T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 4767
+    },
+    {
+      "bucket": "2026-08-10T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 7367
+    },
+    {
+      "bucket": "2026-08-10T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 1244
+    },
+    {
+      "bucket": "2026-08-10T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 3086
+    },
+    {
+      "bucket": "2026-08-11T00:00:00Z",
+      "dims": {
+        "stream": "usage"
+      },
+      "value": 3100
+    },
+    {
+      "bucket": "2026-08-11T00:00:00Z",
+      "dims": {
+        "stream": "services"
+      },
+      "value": 1250
+    },
+    {
+      "bucket": "2026-08-11T00:00:00Z",
+      "dims": {
+        "stream": "subscriptions"
+      },
+      "value": 7400
+    }
+  ],
+  "sessions": [
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1410
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 560
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 269
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1404
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 557
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 267
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 908
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 361
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 173
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 904
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 359
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 172
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1385
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 550
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 264
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1379
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 547
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 263
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1373
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 545
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 261
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1366
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 542
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 260
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1360
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 540
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 259
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 880
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 349
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 168
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 876
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 348
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 167
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1341
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 532
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 255
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1335
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 530
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 254
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1329
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 527
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 253
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1322
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 525
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 252
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1316
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 522
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 251
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 851
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 338
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 162
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 847
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 336
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 161
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1297
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 515
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 247
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1291
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 512
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 246
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1285
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 510
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 245
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1278
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 507
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 243
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1272
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 505
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 242
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 823
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 327
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 157
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 819
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 325
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 156
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1254
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 498
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 239
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1247
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 495
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 238
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1241
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 493
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 236
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1235
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 490
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 235
+    },
+    {
+      "dims": {
+        "platform": "web"
+      },
+      "value": 1229
+    },
+    {
+      "dims": {
+        "platform": "mobile"
+      },
+      "value": 488
+    },
+    {
+      "dims": {
+        "platform": "api"
+      },
+      "value": 234
+    }
+  ]
+}
