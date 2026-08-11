@@ -32,6 +32,57 @@ const KINDS = [
   "support",
 ];
 
+/**
+ * The example event, per source kind.
+ *
+ * This used to be a hardcoded `page_view` for all eight kinds, which meant
+ * creating a `billing` source handed you a snippet that cannot produce
+ * revenue: the rollup derives revenue solely from events named `purchase`
+ * carrying `revenue_cents` (0010_ingest.sql). Someone following the snippet
+ * would send events successfully, get a 202 every time, and watch the revenue
+ * charts stay flat with nothing anywhere reporting an error — the worst shape
+ * a problem can take, because there is nothing to search for.
+ *
+ * Only four names drive charts. Anything else is accepted and counted toward
+ * `events` and `active_users`, which is a legitimate thing to want; `note`
+ * below says so plainly rather than implying every source feeds a chart.
+ */
+const EXAMPLES = {
+  web: {
+    event: { name: "page_view", distinct_id: "u_123", platform: "web" },
+    note: "Moves Visitors and the hourly traffic chart.",
+  },
+  mobile: {
+    event: { name: "page_view", distinct_id: "u_123", platform: "mobile" },
+    note: "Moves Visitors and the hourly traffic chart.",
+  },
+  api: {
+    event: { name: "session_start", distinct_id: "u_123", platform: "api" },
+    note: "Adds an API slice to Sessions by platform.",
+  },
+  billing: {
+    event: {
+      name: "purchase",
+      distinct_id: "u_123",
+      platform: "server",
+      revenue_cents: 4900,
+      properties: { stream: "subscriptions" },
+    },
+    // Worth stating outright: revenue_cents is the only thing that carries an
+    // amount, and stream is a closed set. Both are easy to omit and neither
+    // failure announces itself.
+    note: "Revenue comes only from purchase events with revenue_cents (in cents — 4900 is $49.00). stream must be subscriptions, usage or services.",
+  },
+};
+
+// email, warehouse, ads and support have no charted event of their own.
+const GENERIC = {
+  event: { name: "record_synced", distinct_id: "u_123", platform: "server" },
+  note: "Any event name is accepted. This one counts toward Events Tracked and Active Users, but no chart is derived from it — swap in purchase, page_view, session_start or signup to move one.",
+};
+
+const exampleFor = (kind) => EXAMPLES[kind] ?? GENERIC;
+
 const CopyButton = ({ value, label = "Copy" }) => {
   const [copied, setCopied] = useState(false);
 
@@ -78,7 +129,10 @@ const ConnectSource = ({ functionsUrl }) => {
   const rotate = async (source) => {
     try {
       const key = await issueKey.mutateAsync({ id: source.id });
-      setIssued({ name: source.name, key });
+      // The stored kind, not the form's dropdown — rotating a billing source
+      // should show the billing example regardless of what the form happens
+      // to have selected.
+      setIssued({ name: source.name, key, kind: source.kind });
     } catch {
       setIssued(null);
     }
@@ -103,7 +157,10 @@ const ConnectSource = ({ functionsUrl }) => {
       });
       const key = await issueKey.mutateAsync({ id: source.id });
 
-      setIssued({ name: source.name, key });
+      // Capture the kind alongside the key. Reading the live `kind` state in
+      // the snippet instead would rewrite the example if the dropdown moved
+      // after issuing — under a key the user may already have copied.
+      setIssued({ name: source.name, key, kind });
       setName("");
     } catch {
       // Rendered from the mutation's own error state; see rotate() above.
@@ -111,11 +168,13 @@ const ConnectSource = ({ functionsUrl }) => {
     }
   };
 
+  const example = issued ? exampleFor(issued.kind) : null;
+
   const snippet = issued
     ? `curl -X POST ${functionsUrl || "<your-project>/functions/v1"}/ingest \\
   -H "Authorization: Bearer ${issued.key}" \\
   -H "Content-Type: application/json" \\
-  -d '{"events":[{"name":"page_view","distinct_id":"u_123","platform":"web"}]}'`
+  -d '${JSON.stringify({ events: [example.event] })}'`
     : "";
 
   return (
@@ -208,6 +267,12 @@ const ConnectSource = ({ functionsUrl }) => {
             <pre className="mt-2 overflow-x-auto rounded-xl bg-black/40 p-3 font-mono text-xs leading-relaxed text-gray-300">
               {snippet}
             </pre>
+            {/* Which chart this moves, or plainly that it moves none. A 202
+                looks identical either way, so without this the only signal
+                that an event is uncharted is a chart that never changes. */}
+            <p className="mt-2 text-xs leading-relaxed text-gray-400">
+              {example.note}
+            </p>
           </div>
 
           <button
