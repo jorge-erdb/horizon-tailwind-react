@@ -1,10 +1,14 @@
 import CardMenu from "components/card/CardMenu";
-import React from "react";
 import Checkbox from "components/checkbox";
 import { MdDragIndicator, MdCheckCircle } from "react-icons/md";
 import Card from "components/card";
+import QueryBoundary, { QueryEmpty, QueryError } from "components/common/QueryState";
+import { useTasks, useToggleTask } from "lib/queries/tasks";
 
 const TaskCard = () => {
+  const query = useTasks();
+  const toggle = useToggleTask();
+
   return (
     <Card extra="pb-7 p-[20px]">
       {/* task header */}
@@ -20,68 +24,54 @@ const TaskCard = () => {
         <CardMenu />
       </div>
 
-      {/* task content */}
+      {/* A failed toggle is rolled back in the cache, so the box visibly
+          un-ticks. Without a message that looks like the click was ignored. */}
+      {toggle.isError && (
+        <div className="mt-4">
+          <QueryError error={toggle.error} />
+        </div>
+      )}
 
       <div className="h-full w-full">
-        <div className="mt-5 flex items-center justify-between p-2">
-          <div className="flex items-center justify-center gap-2">
-            <Checkbox />
-            <p className="text-base font-bold text-navy-700 dark:text-white">
-              Review churn alert threshold
-            </p>
-          </div>
-          <div>
-            <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
-          </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between p-2">
-          <div className="flex items-center justify-center gap-2">
-            <Checkbox />
-            <p className="text-base font-bold text-navy-700 dark:text-white">
-              Connect Stripe billing source
-            </p>
-          </div>
-          <div>
-            <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
-          </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between p-2">
-          <div className="flex items-center justify-center gap-2">
-            <Checkbox />
-            <p className="text-base font-bold text-navy-700 dark:text-white">
-              Publish Q3 revenue dashboard
-            </p>
-          </div>
-          <div>
-            <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
-          </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between p-2">
-          <div className="flex items-center justify-center gap-2">
-            <Checkbox />
-            <p className="text-base font-bold text-navy-700 dark:text-white">
-              Audit event schema drift
-            </p>
-          </div>
-          <div>
-            <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
-          </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between p-2">
-          <div className="flex items-center justify-center gap-2">
-            <Checkbox />
-            <p className="text-base font-bold text-navy-700 dark:text-white">
-              Share funnel report with growth
-            </p>
-          </div>
-          <div>
-            <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
-          </div>
-        </div>
+        <QueryBoundary
+          query={query}
+          empty={
+            <QueryEmpty
+              title="No tasks"
+              body="Tasks assigned to this workspace show up here."
+            />
+          }
+        >
+          {(tasks) =>
+            tasks.map((task, index) => (
+              <label
+                key={task.id}
+                className={`flex items-center justify-between p-2 hover:cursor-pointer ${
+                  index === 0 ? "mt-5" : "mt-2"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Checkbox
+                    checked={task.is_done}
+                    onChange={(event) =>
+                      toggle.mutate({ id: task.id, isDone: event.target.checked })
+                    }
+                  />
+                  <p
+                    className={`text-base font-bold ${
+                      task.is_done
+                        ? "text-gray-400 line-through dark:text-gray-500"
+                        : "text-navy-700 dark:text-white"
+                    }`}
+                  >
+                    {task.title}
+                  </p>
+                </div>
+                <MdDragIndicator className="h-6 w-6 text-navy-700 dark:text-white" />
+              </label>
+            ))
+          }
+        </QueryBoundary>
       </div>
     </Card>
   );

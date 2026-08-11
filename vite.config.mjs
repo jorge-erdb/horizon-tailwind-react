@@ -36,4 +36,12 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
   },
+  test: {
+    // Pinned to a negative UTC offset on purpose. Metric buckets are UTC
+    // boundaries from date_trunc, and formatting them in local time slides
+    // every label one bucket backwards -- a bug that is invisible when the
+    // suite runs in UTC, because there the correct and incorrect code agree.
+    // A CI box on UTC would have gone on passing while the dashboard lied.
+    env: { TZ: "America/Monterrey" },
+  },
 });

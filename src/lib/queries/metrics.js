@@ -1,6 +1,7 @@
 import { unwrap, useWorkspaceQuery } from "lib/queries/base";
 import {
   isoDaysAgo,
+  isCurrentMonth,
   startOfTodayIso,
   pivot,
   totalsByDim,
@@ -75,21 +76,32 @@ export function useRevenueTrend(months = 12) {
         }));
 
       const revenue = trimmed.find((entry) => entry.name === "Revenue")?.data;
+      const kept = buckets.slice(start);
+
+      // The current calendar month is still accumulating, so comparing it to
+      // a finished month reports a collapse that is really just the month
+      // being ten days old. Drop it and compare the last two *complete*
+      // months. The chart still plots the partial month — a trend line
+      // stopping short of today looks broken — but the headline number has to
+      // be like-for-like.
+      const lastIsPartial =
+        kept.length > 0 && isCurrentMonth(kept[kept.length - 1]);
+      const end = revenue ? revenue.length - (lastIsPartial ? 1 : 0) : 0;
 
       return {
-        categories: buckets.slice(start).map(monthLabel),
+        categories: kept.map(monthLabel),
         series: trimmed,
         total: revenue?.reduce((sum, value) => sum + value, 0) ?? 0,
-        // Month over month on the last two buckets. Null rather than 0 when
-        // there is only one month of history: no previous period means no
-        // basis for comparison, and a "+0.00%" there reads as "flat" when the
-        // truth is "unknown".
+        // Null rather than 0 when there is nothing to compare against: no
+        // previous period means no basis for comparison, and "+0.00%" reads
+        // as "flat" when the truth is "unknown".
         deltaPct:
-          revenue && revenue.length >= 2 && revenue[revenue.length - 2] > 0
-            ? ((revenue[revenue.length - 1] - revenue[revenue.length - 2]) /
-                revenue[revenue.length - 2]) *
-              100
+          revenue && end >= 2 && revenue[end - 2] > 0
+            ? ((revenue[end - 1] - revenue[end - 2]) / revenue[end - 2]) * 100
             : null,
+        deltaLabel: lastIsPartial
+          ? "vs. previous full month"
+          : "month over month",
       };
     },
     { keyExtras: [months] }

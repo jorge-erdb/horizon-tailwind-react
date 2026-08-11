@@ -54,6 +54,9 @@ const TotalSpent = () => {
                     Revenue, last 12 months
                   </p>
                   {delta && (
+                    <p className="text-xs text-gray-500">{data.deltaLabel}</p>
+                  )}
+                  {delta && (
                     <div className="flex flex-row items-center justify-center">
                       {delta.positive ? (
                         <MdArrowDropUp className="font-medium text-green-500" />
