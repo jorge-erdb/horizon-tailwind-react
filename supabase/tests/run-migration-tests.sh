@@ -14,7 +14,15 @@
 set -euo pipefail
 
 CONTAINER="nova-pg-test-$$"
-IMAGE="postgres:16-alpine"
+
+# Match the major version the Supabase project actually runs (17.x). Asserting
+# migrations against a different major than production is a gap in the one
+# layer these tests exist to cover -- policy and function behaviour is exactly
+# the kind of thing that can differ across majors. Override to check a
+# prospective upgrade before Supabase applies it:
+#
+#   POSTGRES_IMAGE=postgres:18-alpine ./supabase/tests/run-migration-tests.sh
+IMAGE="${POSTGRES_IMAGE:-postgres:17-alpine}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 cleanup() { docker rm -f "$CONTAINER" >/dev/null 2>&1 || true; }
