@@ -151,5 +151,49 @@ begin
   raise notice 'PASS: empty workspace returns zeros, not nulls or errors';
 end $$;
 
+-- --- anon cannot reach the RPCs ---------------------------------------------
+-- 0007 exists because revoking from `public` does not remove Supabase's
+-- default grant to `anon`. Without this assertion that migration is a comment:
+-- nothing else in the suite would notice if the revoke were dropped.
+--
+-- The guard inside get_dashboard_kpis means an anon call raises either way, so
+-- checking for "it raised" would pass for the wrong reason. Check the ACL
+-- directly instead.
+reset role;
+
+do $$
+declare
+  fn text;
+begin
+  foreach fn in array array[
+    'public.pct_change(numeric, numeric)',
+    'public.get_dashboard_kpis(uuid, integer)',
+    'public.create_workspace(text)',
+    'public.seed_workspace_demo_data(uuid)'
+  ] loop
+    if has_function_privilege('anon', fn, 'execute') then
+      raise exception 'FAIL: anon can execute %', fn;
+    end if;
+    -- The same call must still work for a signed-in user; a revoke that took
+    -- authenticated with it would break the dashboard rather than secure it.
+    if not has_function_privilege('authenticated', fn, 'execute') then
+      raise exception 'FAIL: authenticated lost execute on %', fn;
+    end if;
+  end loop;
+
+  -- Deliberately NOT asserted here: anon's execute grant on
+  -- is_workspace_member / is_workspace_admin. Hosted Supabase grants it via
+  -- project default privileges, this shim does not, so the two environments
+  -- genuinely disagree and an assertion either way would be testing the
+  -- harness rather than the schema. Nothing depends on the difference — the
+  -- helper returns false for a null auth.uid(), so an anon read is empty
+  -- where the grant exists and an error where it doesn't. Neither leaks rows.
+  --
+  -- The checks above are safe to assert because they cover explicit revokes
+  -- this repo issues, not ambient platform defaults.
+
+  raise notice 'PASS: RPC execute grants scoped to authenticated';
+end $$;
+
 \echo ''
 \echo 'All migration assertions passed.'

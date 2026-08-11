@@ -52,14 +52,14 @@ run_migration "$ROOT/supabase/tests/shim.sql" >/dev/null
 
 echo "==> applying migrations"
 for migration in "$ROOT"/supabase/migrations/*.sql; do
-  printf '    %-24s' "$(basename "$migration")"
+  printf '    %-28s' "$(basename "$migration")"
   run_migration "$migration" >/dev/null
   echo "ok"
 done
 
 echo "==> re-applying migrations (must be idempotent)"
 for migration in "$ROOT"/supabase/migrations/*.sql; do
-  printf '    %-24s' "$(basename "$migration")"
+  printf '    %-28s' "$(basename "$migration")"
   run_migration "$migration" >/dev/null
   echo "ok"
 done
