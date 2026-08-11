@@ -268,17 +268,7 @@ npm test                                   # Vitest — unit tests
 ./supabase/tests/run-migration-tests.sh    # requires Docker — schema + RLS
 ```
 
-Both run in CI on every push and pull request — see
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml). They are split into
-two jobs (`app` and `migrations`) so a red build names which half broke: a
-leaking RLS policy and a broken chart are unrelated problems.
-
-CI does not deploy. Vercel builds from its own GitHub integration, so the
-workflow's job is to tell you whether the commit Vercel is about to ship
-compiles and passes. The build step reads the optional repository secrets
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; without them it still
-compiles, it just produces a bundle that cannot reach the backend, which is
-sufficient for catching compile errors.
+Both run on every push and pull request — see [CI/CD](#cicd).
 
 ### Unit tests
 
@@ -422,10 +412,13 @@ Things worth knowing before this goes in front of anyone:
   layer. There are no component tests — `@testing-library` is still installed
   from the CRA era and unused. Rendering is not where the silent bugs have
   been; arithmetic and time zones are.
-- The Edge Function has never been executed here — this machine has neither
-  Deno nor the Supabase CLI. Its parsing logic is unit tested and the SQL it
-  calls is covered end to end, but the deployed HTTP path itself is unverified
-  until someone runs `curl` against it.
+- The Edge Function is deployed and has been exercised end to end with `curl`
+  against the live project. Its parsing logic is unit tested and the SQL it
+  calls is covered by the migration suite, but the HTTP path itself has no
+  automated test — nothing in CI would catch a regression in it.
+- **CI does not gate deployment.** GitHub Actions and Vercel run
+  independently, so a commit failing the tests still ships. See
+  [CI/CD](#cicd) for what closing that would take.
 - The dashboard chunk is ~169 KB gzipped, almost all ApexCharts. It is
   already split away from the landing and auth bundles, but swapping to a
   lighter chart library would matter more than any further splitting.
@@ -445,6 +438,55 @@ Things worth knowing before this goes in front of anyone:
   requires. Do not delete it.
 
 ---
+
+## CI/CD
+
+Two systems, each doing the half it is good at.
+
+**CI — GitHub Actions**, [`.github/workflows/ci.yml`](.github/workflows/ci.yml),
+on every push and pull request. Two independent jobs, so a red build names
+which half broke rather than making you open the log to find out; a leaking
+RLS policy and a broken chart are unrelated problems.
+
+| Job | Runs |
+| --- | --- |
+| `app` | `npm ci` → `npm test` → `npm run build` |
+| `migrations` | `./supabase/tests/run-migration-tests.sh` — every migration applied in order, applied a *second* time to prove idempotency, then the assertion suite |
+
+`concurrency` with `cancel-in-progress` drops superseded runs: a second push to
+a branch makes the first result irrelevant before anyone reads it.
+
+The migration job runs against **Postgres 17**, matching the version the
+Supabase project actually runs. Asserting migrations on a different major than
+production is a gap in the one layer those tests exist to cover — policy
+evaluation and function behaviour can differ across majors, and a green suite
+would be implying a guarantee it never checked. The image tag is overridable
+so an upgrade can be checked before Supabase applies it:
+
+```bash
+POSTGRES_IMAGE=postgres:18-alpine ./supabase/tests/run-migration-tests.sh
+```
+
+The build step reads the optional repository secrets `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`. Without them it still compiles — it just produces a
+bundle that cannot reach the backend, which is sufficient for catching compile
+errors, and nothing deploys the artifact.
+
+**CD — Vercel**, from its own GitHub integration. Production tracks `main`;
+every branch and pull request gets a preview deployment. CI deliberately does
+not deploy: duplicating the build in Actions would mean the thing tested and
+the thing shipped were built by different pipelines.
+
+### The gap, stated plainly
+
+**These two run independently, and Vercel does not wait for CI.** A commit that
+fails the RLS assertions will still deploy. The tests tell you a commit is
+broken; they do not currently stop it shipping.
+
+Closing this means pointing Vercel's *Ignored Build Step* at the GitHub check
+so a failed run cancels the deployment. It is a project-settings change rather
+than a code one, which is exactly why it is easy to leave undone and call the
+pipeline finished. It is recorded here instead of quietly claimed as working.
 
 ## Deployment (Vercel)
 
