@@ -68,10 +68,22 @@ Notes:
 3. **Authentication → URL Configuration → Site URL**: `http://localhost:3000`
    for local development; your real origin before deploying.
 4. **Authentication → URL Configuration → Redirect URLs**: add
-   `http://localhost:3000/**` (and `https://your-domain/**` for production).
-   **This is required.** Every emailed link redirects to `/auth/callback`, and
-   Supabase silently falls back to the Site URL if that path is not
-   allow-listed — the link then appears to do nothing.
+   `http://localhost:3000/**` (and `https://<your-production-domain>/**` for
+   production). **This is required.** Every emailed link redirects to
+   `/auth/callback`, and Supabase silently falls back to the Site URL if that
+   path is not allow-listed — the link then appears to do nothing.
+
+   If your hosting generates a fresh hostname per branch or pull request, add a
+   wildcard covering those too:
+
+   ```
+   https://<your-production-domain>/**
+   https://<generated-preview-hostname-pattern>/**
+   ```
+
+   Without the second entry, signing up from a preview build sends a
+   confirmation link that redirects to production, where the token is not valid
+   for that origin — and the link appears to silently fail.
 5. **Authentication → Email → Confirm email**: your call. Both are handled.
    - **On** (Supabase default): sign-up shows a "check your inbox" message
      with a resend option; the emailed link lands on `/auth/callback`, which
@@ -236,7 +248,7 @@ supabase/migrations/      SQL to run in the Supabase SQL Editor, in order
 supabase/functions/ingest Edge Function: the public event ingest endpoint
 supabase/tests/           Dockerised migration test harness
 tailwind.config.js        Nova design tokens
-vercel.json               SPA rewrite, caching, security headers
+api/health.mjs            Liveness + dependency check, served at /api/health
 ```
 
 ### Design tokens
@@ -416,7 +428,7 @@ Things worth knowing before this goes in front of anyone:
   against the live project. Its parsing logic is unit tested and the SQL it
   calls is covered by the migration suite, but the HTTP path itself has no
   automated test — nothing in CI would catch a regression in it.
-- **CI does not gate deployment.** GitHub Actions and Vercel run
+- **CI does not gate deployment.** GitHub Actions and the deploy run
   independently, so a commit failing the tests still ships. See
   [CI/CD](#cicd) for what closing that would take.
 - The dashboard chunk is ~169 KB gzipped, almost all ApexCharts. It is
@@ -472,71 +484,73 @@ The build step reads the optional repository secrets `VITE_SUPABASE_URL` and
 bundle that cannot reach the backend, which is sufficient for catching compile
 errors, and nothing deploys the artifact.
 
-**CD — Vercel**, from its own GitHub integration. Production tracks `main`;
-every branch and pull request gets a preview deployment. CI deliberately does
-not deploy: duplicating the build in Actions would mean the thing tested and
-the thing shipped were built by different pipelines.
+**CD** is handled by the host's own GitHub integration rather than by this
+workflow. Production tracks `main`; branches and pull requests get preview
+deployments. CI deliberately does not deploy: duplicating the build in Actions
+would mean the artifact that was tested and the artifact that shipped came from
+two different pipelines.
 
 ### The gap, stated plainly
 
-**These two run independently, and Vercel does not wait for CI.** A commit that
-fails the RLS assertions will still deploy. The tests tell you a commit is
-broken; they do not currently stop it shipping.
+**These two run independently, and the deploy does not wait for CI.** A commit
+that fails the RLS assertions will still ship. The tests tell you a commit is
+broken; they do not currently stop it going out.
 
-Closing this means pointing Vercel's *Ignored Build Step* at the GitHub check
-so a failed run cancels the deployment. It is a project-settings change rather
-than a code one, which is exactly why it is easy to leave undone and call the
-pipeline finished. It is recorded here instead of quietly claimed as working.
+Closing this means gating the host's build on the commit's GitHub check status,
+so a failed run cancels the deployment. Every host worth using exposes some
+form of that, and it is a hosting-settings change rather than a code one —
+which is exactly why it is easy to leave undone and still call the pipeline
+finished. It is recorded here instead of quietly claimed as working.
 
-## Deployment (Vercel)
+## Deployment
 
-`npm run build` emits a static bundle in `dist/`. `vercel.json` is committed
-and configures the deploy; Vercel needs no dashboard build settings.
+`npm run build` emits a static bundle in `dist/`. There is no application
+server: the browser talks to Supabase directly over HTTPS, and the only
+server-side code in this repo is one health function.
 
-**What `vercel.json` does, and why:**
+That makes the hosting requirements short, and deliberately generic — nothing
+here is tied to a particular provider. Whatever you deploy to needs to do four
+things.
 
-- **SPA fallback** — rewrites everything to `/index.html`. Without it,
-  hard-refreshing `/auth/sign-in` (or opening any emailed auth link) returns
-  404, because no such file exists. Vercel checks the filesystem *before*
-  rewrites, so real assets, `favicon.ico` and `manifest.json` still win over
-  the catch-all.
-- **Immutable caching** on `/assets/*`, which Vite content-hashes.
-- **Baseline security headers** — nosniff, `DENY` framing, a conservative
-  referrer policy, HSTS.
+**1. Serve `dist/` with an SPA fallback.** Unmatched paths must return
+`/index.html` rather than 404, or hard-refreshing `/auth/sign-in` — and opening
+any emailed auth link, which lands on `/auth/callback` — breaks. Real files
+must still win over the fallback, so `favicon.ico`, `manifest.json` and the
+hashed assets are served as themselves. If you also deploy the health function
+below, keep `/api/*` out of the fallback or it will swallow that route too.
 
-Note `vercel.json` has no comments because JSON has none, and Vercel
-validates the file strictly — adding an unrecognised key (including a
-`comment` key) fails the build rather than being ignored.
+**2. Supply the build-time environment variables.**
 
-### Steps
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-1. Import the repo in Vercel. It will detect Vite; `vercel.json` pins the
-   build command and output directory regardless.
-2. **Project → Settings → Environment Variables**, for Production, Preview
-   *and* Development:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+These are **inlined into the bundle when it is built**, not read at runtime.
+Changing either one requires a rebuild; restarting the host does nothing. Set
+them for every environment you build — production and previews alike, or the
+preview builds come up in the "not configured" state.
 
-   These are inlined into the bundle at build time, so changing one requires
-   a **redeploy**, not just a restart.
-3. **Supabase → Authentication → URL Configuration**:
-   - Site URL: your production origin, e.g. `https://nova-analytics.vercel.app`
-   - Redirect URLs — add **both**:
-     ```
-     https://<your-production-domain>/**
-     https://<project>-*-<your-team>.vercel.app/**
-     ```
-     The second entry matters: every preview deployment gets a unique
-     generated hostname. Without the wildcard, a signup from a preview branch
-     sends a confirmation link that redirects to production, where the token
-     is not valid for that origin — the link appears to silently fail.
+**3. Cache `/assets/*` immutably.** Vite content-hashes those filenames, so a
+long `max-age` with `immutable` is safe and a changed file gets a new name.
+
+**4. Send baseline security headers**: `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, a conservative referrer policy, a restrictive
+permissions policy, and HSTS.
+
+Optionally, a **Node serverless function** to run `api/health.mjs` at
+`/api/health`. It is genuinely optional — the app is fully functional without
+it, and a static-only host can drop the file.
+
+The repo carries the config file its current host reads for items 1, 3 and 4.
+If you deploy elsewhere, that file is inert and you configure the equivalents
+however your host does.
 
 ### Health check
 
-`GET /api/health` — a Vercel serverless function, same origin as the app.
+`GET /api/health` — a serverless Node function, served from the same origin as
+the app.
 
 ```bash
-curl -s https://horizon-tailwind-react-theta.vercel.app/api/health | jq
+curl -s https://<your-deployment>/api/health | jq
 ```
 
 ```json

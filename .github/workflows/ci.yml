@@ -5,9 +5,9 @@
 # the rollup depend on. A broken policy and a broken chart are different
 # problems and should not hide behind one red X.
 #
-# Vercel builds and deploys on its own from the GitHub integration; this
+# The host builds and deploys on its own from the GitHub integration; this
 # workflow deliberately does not deploy. It is the check that tells you whether
-# the commit Vercel is about to ship actually compiles and passes its tests.
+# the commit about to ship actually compiles and passes its tests.
 
 name: CI
 
@@ -48,7 +48,7 @@ jobs:
       # still compiles — it just produces a bundle that cannot reach the
       # backend. That is fine here: this step exists to catch compile errors,
       # and nothing deploys the artifact. Set the two repository secrets if you
-      # want CI to build the same bundle Vercel does; unset, they resolve to
+      # want CI to build the same bundle the host does; unset, they resolve to
       # empty strings and the app falls back to its "not configured" state.
       - name: Build
         env:
@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # The harness drives Docker itself — it starts a throwaway postgres:16
+      # The harness drives Docker itself — it starts a throwaway postgres:17
       # container, applies every migration in order, runs them a second time to
       # prove idempotency, then executes the assertions. Nothing here touches
       # the real Supabase project.
