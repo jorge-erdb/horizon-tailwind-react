@@ -1,6 +1,6 @@
 import Card from "components/card";
-import React from "react";
 import { useAuth } from "contexts/AuthContext";
+import { useWorkspace } from "contexts/WorkspaceContext";
 
 const formatDate = (value) =>
   value
@@ -11,8 +11,25 @@ const formatDate = (value) =>
       })
     : "—";
 
+// workspaces.plan and .data_residency are constrained to these values by the
+// schema. Labels rather than raw values, but derived from the row -- the card
+// used to claim "Nova Scale" and "EU (Frankfurt)" for every workspace,
+// including a trial on US infrastructure.
+const PLAN_LABEL = {
+  trial: "Trial",
+  starter: "Nova Starter",
+  scale: "Nova Scale",
+  enterprise: "Nova Enterprise",
+};
+
+const RESIDENCY_LABEL = {
+  us: "US (N. Virginia)",
+  eu: "EU (Frankfurt)",
+};
+
 const General = () => {
   const { user, profile } = useAuth();
+  const { workspace, role } = useWorkspace();
 
   return (
     <Card extra={"w-full h-full p-3"}>
@@ -31,14 +48,17 @@ const General = () => {
         <div className="flex flex-col items-start justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
           <p className="text-sm text-gray-600">Role</p>
           <p className="text-base font-medium capitalize text-navy-700 dark:text-white">
-            {profile?.role ?? "Member"}
+            {/* workspace_members.role, not profiles.role. The latter is an
+                account-level default that stays 'member' even for the owner
+                of the workspace, which is what this card is describing. */}
+            {role ?? profile?.role ?? "Member"}
           </p>
         </div>
 
         <div className="flex flex-col justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
           <p className="text-sm text-gray-600">Plan</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            Nova Scale
+            {PLAN_LABEL[workspace?.plan] ?? "—"}
           </p>
         </div>
 
@@ -52,14 +72,14 @@ const General = () => {
         <div className="flex flex-col justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
           <p className="text-sm text-gray-600">Data residency</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            EU (Frankfurt)
+            {RESIDENCY_LABEL[workspace?.data_residency] ?? "—"}
           </p>
         </div>
 
         <div className="flex flex-col items-start justify-center rounded-2xl bg-white bg-clip-border px-3 py-4 shadow-3xl shadow-shadow-500 dark:!bg-navy-700 dark:shadow-none">
-          <p className="text-sm text-gray-600">Organization</p>
+          <p className="text-sm text-gray-600">Workspace</p>
           <p className="text-base font-medium text-navy-700 dark:text-white">
-            Nova Analytics
+            {workspace?.name ?? "—"}
           </p>
         </div>
 

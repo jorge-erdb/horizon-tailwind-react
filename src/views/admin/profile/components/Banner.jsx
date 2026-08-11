@@ -1,16 +1,34 @@
-import React from "react";
 import avatar from "assets/img/avatars/avatar11.png";
 import banner from "assets/img/profile/banner.png";
 import Card from "components/card";
 import { useAuth } from "contexts/AuthContext";
+import { useDataSources } from "lib/queries/dataSources";
+import { useReports } from "lib/queries/reports";
+import { useAlerts } from "lib/queries/alerts";
+import { useWorkspace } from "contexts/WorkspaceContext";
 
 const Banner = () => {
   const { user, profile } = useAuth();
+  const { role: workspaceRole } = useWorkspace();
+  const dataSources = useDataSources();
+  const reports = useReports();
+  const alerts = useAlerts({ activeOnly: true });
+
+  // An em dash while a query is settling, so a zero never reads as "you have
+  // none" before the answer is actually known.
+  const count = (query) => (query.isPending ? "—" : (query.data ?? []).length);
+  const counts = {
+    sources: count(dataSources),
+    reports: count(reports),
+    alerts: count(alerts),
+  };
 
   const name =
     profile?.full_name || user?.email?.split("@")[0] || "Your account";
-  const role = profile?.role
-    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
+  // Workspace membership role rather than profiles.role — see General.jsx.
+  const rawRole = workspaceRole ?? profile?.role;
+  const role = rawRole
+    ? rawRole.charAt(0).toUpperCase() + rawRole.slice(1)
     : "Member";
 
   return (
@@ -36,23 +54,29 @@ const Banner = () => {
         </p>
       </div>
 
-      {/* Post followers */}
+      {/* Workspace counts.
+          Was "42 Dashboards / 1.2K Saved queries / 24 Data sources". Nova has
+          no dashboards or saved-queries tables, so those two were replaced
+          rather than wired -- there is nothing behind them to read. These
+          three each map to a real table. */}
       <div className="mt-6 mb-3 flex gap-4 md:!gap-14">
         <div className="flex flex-col items-center justify-center">
-          <p className="text-2xl font-bold text-navy-700 dark:text-white">42</p>
-          <p className="text-sm font-normal text-gray-600">Dashboards</p>
-        </div>
-        <div className="flex flex-col items-center justify-center">
           <p className="text-2xl font-bold text-navy-700 dark:text-white">
-            1.2K
-          </p>
-          <p className="text-sm font-normal text-gray-600">Saved queries</p>
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-2xl font-bold text-navy-700 dark:text-white">
-            24
+            {counts.sources}
           </p>
           <p className="text-sm font-normal text-gray-600">Data sources</p>
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-2xl font-bold text-navy-700 dark:text-white">
+            {counts.reports}
+          </p>
+          <p className="text-sm font-normal text-gray-600">Reports</p>
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-2xl font-bold text-navy-700 dark:text-white">
+            {counts.alerts}
+          </p>
+          <p className="text-sm font-normal text-gray-600">Active alerts</p>
         </div>
       </div>
     </Card>

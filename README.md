@@ -128,9 +128,12 @@ src/
   contexts/WorkspaceContext  Resolves the active workspace and its memberships
   lib/supabase.js         Supabase client, reads env vars
   lib/queryClient.js      react-query defaults (retry policy, staleness)
+  lib/format.js           Number/date display, shared so two cards agree
+  lib/tableRows.js        DB rows -> the shapes the Horizon tables expect
   lib/queries/            One module per entity; every query is workspace-scoped
     base.js               Shared hooks: enable-when-ready, error unwrapping
     shape.js              Pure metric_points -> chart-series transforms
+  variables/charts.js     Chart *presentation* only — series come from queries
   views/
     landing/              Marketing page and its sections
     auth/                 SignIn, SignUp, AuthCallback, ResetPassword
@@ -188,6 +191,16 @@ value in every bucket — so the fixture tests cannot detect a misalignment bug
 on their own. Replacing the bucket-indexed fill with a naive per-series
 `push()` fails exactly one test, the synthetic gap case. That test is doing
 the load-bearing work; the fixture tests guard shape and ordering.
+
+**The suite runs in `America/Monterrey`, pinned in `vite.config.mjs`, and that
+is load-bearing.** Metric buckets are UTC boundaries from `date_trunc`, so
+formatting them in local time slides every label one bucket backwards — a
+May–Aug chart labelled Apr–Jul. In UTC the correct and incorrect
+implementations agree, so a CI box on UTC would go on passing while the
+dashboard misreported which day a number belonged to. Timestamps in the tests
+carry an explicit `Z` for the same reason: a bare `"2026-08-01T00:00:00"`
+parses as local and quietly reintroduces the frame the code is meant to be
+free of.
 
 ### Migration tests
 
