@@ -12,6 +12,55 @@ authentication, and a whitelabeled analytics dashboard.
 
 ---
 
+## Reviewing this project
+
+**The reviewer workspace is empty on purpose, and filling it takes about
+thirty seconds.**
+
+Signing in shows a dashboard of zeros. Nothing is broken. No data is seeded on
+signup — a new account gets a new workspace, and a new workspace is a new
+tenant with nothing in it. Handing every reviewer a pre-populated dashboard
+would have meant seeding fake rows and calling them a demo, which proves
+nothing about whether the pipeline works.
+
+Making it move is the demo. In the app:
+
+1. **Data Tables → Connect a source.** Name it anything; set **Kind** to
+   `billing`.
+2. **Create source & issue key.** The key is shown once — a `curl` command is
+   generated below it, already filled in with your key and a correctly shaped
+   `purchase` event.
+3. Copy that command and run it in a terminal. Expect `202` and
+   `{"accepted":1}`.
+4. Go back to the dashboard and **wait about fifteen seconds. Do not reload.**
+
+Revenue, Events Tracked and the revenue bars all move on their own. That is a
+real event travelling through the Edge Function, into `events`, through the
+rollup into `metric_points`, and back out to a chart — not a seeded row and not
+a refresh.
+
+The **profit line stays absent**, and that is also correct. Profit is computed
+from a cost basis in `workspace_costs`, and a workspace that has never declared
+what it costs to run gets no profit series rather than a profit equal to
+revenue. "We have not said what this costs" and "this costs nothing" are
+different claims, and only one of them is true here — see
+[Profit and the cost model](#profit-and-the-cost-model).
+
+Change the **Kind** and the generated command changes with it: `web` sends a
+`page_view` that moves Visitors and the hourly traffic chart, `api` sends a
+`session_start` that adds a slice to Sessions by platform. Each one says which
+chart it feeds, or plainly that it feeds none — see
+[the event contract](#the-event-contract) for why only four event names drive
+charts.
+
+**Two things worth watching while you do it.** Nothing you send appears in any
+other account — write keys resolve to exactly one workspace, and every table is
+read through RLS policies asserted in `supabase/tests/`. And the rollup is
+additive: run the command twice in the same hour and the totals grow rather
+than the second run replacing the first.
+
+---
+
 ## Setup
 
 Requires **Node.js 18+** (LTS recommended) and npm.
