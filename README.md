@@ -489,6 +489,55 @@ validates the file strictly — adding an unrecognised key (including a
      sends a confirmation link that redirects to production, where the token
      is not valid for that origin — the link appears to silently fail.
 
+### Health check
+
+`GET /api/health` — a Vercel serverless function, same origin as the app.
+
+```bash
+curl -s https://horizon-tailwind-react-theta.vercel.app/api/health | jq
+```
+
+```json
+{
+  "status": "ok",
+  "service": "nova-analytics",
+  "checks": {
+    "config":   { "ok": true },
+    "database": { "ok": true, "latency_ms": 142 },
+    "rls":      { "ok": true }
+  },
+  "commit": "4f43214",
+  "timestamp": "2026-08-11T16:33:20.971Z"
+}
+```
+
+`200` when healthy, `503` when any check fails, `Cache-Control: no-store` so a
+monitor never reads a stale answer as a live one.
+
+It checks the dependency that can actually break rather than only proving the
+CDN can return a response. `config` reports whether the deployment was given
+its environment at all — distinguished from a failed check because "never
+configured" and "broken" have different fixes. `database` does one anonymous
+`select id ... limit 1` against `workspaces`, which covers PostgREST
+reachability and schema presence in a single request.
+
+`rls` is the interesting one. That same request must come back **empty**. The
+publishable key ships in the browser bundle by design, so RLS is the only
+thing between it and every tenant's data; a policy change that opens a table
+would otherwise stay invisible until someone found their data in a stranger's
+dashboard. Rows here mean that has happened, and the endpoint reports
+`degraded` rather than calling the system healthy because it answered quickly.
+
+No secrets are involved — it uses the same URL and publishable key the browser
+already holds, and there is deliberately no path through it that touches
+`service_role`.
+
+The file is `api/health.mjs`. The extension is load-bearing: `package.json`
+has no `"type": "module"`, so a `.js` file there would be treated as CommonJS
+and `export default` would throw at runtime. Setting the package to ESM
+instead would break `postcss.config.js` and `prettier.config.js`, which are
+both `module.exports`.
+
 ### Not yet configured
 
 A **Content-Security-Policy** is deliberately absent. The correct policy for
