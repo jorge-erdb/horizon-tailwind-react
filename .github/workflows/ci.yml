@@ -28,9 +28,9 @@ jobs:
     name: Tests and build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -60,7 +60,7 @@ jobs:
     name: Migration and RLS assertions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # The harness drives Docker itself — it starts a throwaway postgres:16
       # container, applies every migration in order, runs them a second time to
