@@ -504,6 +504,52 @@ begin
   raise notice 'PASS: rollup metrics, units, and window containment';
 end $$;
 
+-- --- per-source health is a health signal, not an age signal ----------------
+do $$
+declare
+  alice_ws uuid;
+  src      uuid;
+  health   numeric;
+  events_n bigint;
+begin
+  select default_workspace_id into alice_ws from public.profiles where email = 'alice@novaanalytics.io';
+  select d.id into src from public.data_sources d
+    where d.workspace_id = alice_ws and d.write_key_hash is not null limit 1;
+
+  select health_pct, events_30d into health, events_n
+    from public.data_sources where id = src;
+
+  -- The source was created moments ago by the seed and has reported on every
+  -- day it has existed. Dividing by a flat 7 would score it ~29% here, which
+  -- says "failing" about a source that has never missed a day.
+  if health < 100 then
+    raise exception
+      'FAIL: healthy new source scored % percent — health window is the source age, not a flat 7 days',
+      health;
+  end if;
+
+  -- Backfilled events across more days than the source has existed must not
+  -- push health past the column's check constraint. Unclamped this is >100
+  -- and the UPDATE throws, which would take down the entire rollup.
+  if health > 100 then
+    raise exception 'FAIL: health_pct % exceeds 100 and will violate the check constraint', health;
+  end if;
+
+  if events_n <> 14 then
+    raise exception 'FAIL: events_30d = %, expected 14 ingested events', events_n;
+  end if;
+
+  -- Seeded sources have no events rows; recomputing them would zero their
+  -- plausible demo values and make the workspace look broken.
+  perform 1 from public.data_sources
+    where workspace_id = alice_ws and write_key_hash is null and events_30d = 0;
+  if found then
+    raise exception 'FAIL: rollup zeroed a seeded source that never reported';
+  end if;
+
+  raise notice 'PASS: per-source health, event counts, and seeded sources preserved';
+end $$;
+
 -- --- profit is costed, not invented -----------------------------------------
 do $$
 declare

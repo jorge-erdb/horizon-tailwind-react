@@ -467,9 +467,35 @@ begin
   update public.data_sources d
      set events_30d = s.recent,
          last_sync_at = s.latest,
-         -- Share of the last 7 days on which this source reported at all.
-         -- A real signal about pipeline continuity, unlike a static number.
-         health_pct = round(s.active_days * 100.0 / 7.0, 2)
+         -- Share of the days this source *could* have reported on which it
+         -- actually did — a real signal about pipeline continuity rather
+         -- than a static number.
+         --
+         -- The window is the source's own age, capped at 7 days, not a flat
+         -- 7. Dividing by 7 unconditionally means a source connected today
+         -- has one active day out of seven and scores 14% while working
+         -- perfectly, and nothing under a week old can ever reach 100%. That
+         -- turns the health column into an age column.
+         --
+         -- Clamped to 100 because health_pct is `check (between 0 and 100)`
+         -- and active_days can exceed the window: backfilling history through
+         -- a source created today gives 7 active days against a 1-day window.
+         -- Unclamped that is 700%, which fails the constraint and takes the
+         -- whole rollup — every metric, every workspace — down with it on
+         -- every cron run.
+         health_pct = least(
+           round(
+             s.active_days * 100.0 / greatest(
+               least(
+                 7,
+                 ceil(extract(epoch from (now() - d.created_at)) / 86400.0)
+               ),
+               1
+             ),
+             2
+           ),
+           100
+         )
     from (
       select
         e.data_source_id,
