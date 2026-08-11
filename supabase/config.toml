@@ -1,0 +1,26 @@
+# Nova Analytics — Supabase CLI config
+#
+# Only the bits that matter for deployment are set here; everything else uses
+# CLI defaults.
+#
+# This file is committed because verify_jwt below changes how the deployed
+# endpoint behaves. Never inline a secret here — the CLI interpolates
+# environment variables, so write `password = "env(SMTP_PASSWORD)"` rather
+# than the value itself.
+
+project_id = "nova-analytics"
+
+[functions.ingest]
+# The gateway verifies a Supabase JWT on every function call by default, and
+# it does that BEFORE the function runs. Ingest callers authenticate with a
+# per-source write key sent as `Authorization: Bearer nvk_...`, which is not a
+# JWT — so with verification on, every legitimate request is rejected with a
+# 401 that never reaches our code and never appears in the function logs.
+#
+# Turning it off does not make the endpoint unauthenticated: ingest_events()
+# resolves the write key against data_sources.write_key_hash and raises if it
+# does not match.
+#
+# The equivalent for a manual deploy is:
+#   supabase functions deploy ingest --no-verify-jwt
+verify_jwt = false

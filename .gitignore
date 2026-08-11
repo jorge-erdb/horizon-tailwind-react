@@ -23,11 +23,16 @@
 # Supabase CLI local artifacts.
 # Migrations under supabase/migrations/ are deliberately NOT ignored — they
 # are the versioned record of the schema and the app depends on them. Only
-# the CLI's local state is ignored here. Note config.toml can carry SMTP and
-# OAuth secrets once you start configuring providers, so it stays out.
+# the CLI's local state is ignored here.
+#
+# config.toml IS tracked. It was ignored because it can carry SMTP and OAuth
+# secrets, but it also carries [functions.ingest] verify_jwt = false, and a
+# clone without that deploys an endpoint that 401s every valid request with
+# no error anywhere in the logs. Keep secrets out of it using the CLI's env
+# interpolation instead — `password = "env(SMTP_PASSWORD)"` — rather than
+# inlining a value and re-ignoring the file.
 supabase/.branches
 supabase/.temp
-supabase/config.toml
 
 npm-debug.log*
 yarn-debug.log*
