@@ -228,6 +228,10 @@ begin
   end;
 
   reset role;
+  -- `reset role` does NOT clear the JWT claim, and these assertions run as one
+  -- transaction, so leaving it set would make auth.uid() keep returning this
+  -- non-member for every later block — quietly changing what they test.
+  set local request.jwt.claim.sub = '';
 
   if not blocked then
     raise exception 'FAIL: non-member seeded another workspace';
@@ -239,6 +243,390 @@ begin
   select count(*) into seeded
     from public.data_sources where workspace_id = victim_ws;
   raise notice 'PASS: non-member blocked from seeding (victim still has % sources)', seeded;
+end $$;
+
+-- --- ingestion pipeline (phase 5) -------------------------------------------
+--
+-- The write key is the only thing standing between the public internet and
+-- someone else's `events` table, so these check rejection paths first and the
+-- happy path second.
+do $$
+declare
+  alice_ws uuid;
+  bob_ws   uuid;
+  src      uuid;
+  key      text;
+  n        bigint;
+  rejected boolean;
+  today    timestamptz := date_trunc('day', now());
+begin
+  select default_workspace_id into alice_ws from public.profiles where email = 'alice@novaanalytics.io';
+  select default_workspace_id into bob_ws   from public.profiles where email = 'bob@example.com';
+
+  select id into src from public.data_sources
+    where workspace_id = alice_ws order by name limit 1;
+
+  -- The seeded sources have write_key_hash = null. If the lookup ever used
+  -- `is not distinct from`, or coalesced the hash, an empty or garbage key
+  -- would match one of them and write into a real workspace. This is the
+  -- single most dangerous failure mode in the whole pipeline.
+  select count(*) into n from public.data_sources where write_key_hash is null;
+  if n = 0 then
+    raise exception 'FAIL: assertion setup — expected keyless seeded sources to test against';
+  end if;
+
+  rejected := false;
+  begin perform public.ingest_events('', '[]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: empty write key accepted'; end if;
+
+  rejected := false;
+  begin perform public.ingest_events(null, '[]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: null write key accepted'; end if;
+
+  rejected := false;
+  begin perform public.ingest_events('nvk_not_a_real_key_at_all', '[]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: unknown write key accepted'; end if;
+
+  -- --- mint a key ---------------------------------------------------------
+  key := public.issue_write_key(src);
+  if key is null or key !~ '^nvk_[0-9a-f]{48}$' then
+    raise exception 'FAIL: issued write key has unexpected shape: %', key;
+  end if;
+
+  -- Only the hash is persisted.
+  perform 1 from public.data_sources where id = src and write_key_hash = key;
+  if found then raise exception 'FAIL: write key stored in plaintext'; end if;
+  perform 1 from public.data_sources
+    where id = src and write_key_hash = public.hash_write_key(key)
+      and write_key_hint = right(key, 6);
+  if not found then raise exception 'FAIL: write key hash/hint not stored'; end if;
+
+  -- --- validation of reserved names ---------------------------------------
+  rejected := false;
+  begin
+    perform public.ingest_events(key,
+      '[{"name":"purchase","revenue_cents":1000,"properties":{"stream":"subscription"}}]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: purchase with an unknown stream accepted'; end if;
+
+  rejected := false;
+  begin
+    perform public.ingest_events(key, '[{"name":"purchase","properties":{"stream":"usage"}}]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: purchase without revenue_cents accepted'; end if;
+
+  rejected := false;
+  begin
+    perform public.ingest_events(key, '[{"name":"page_view","platform":"carrier-pigeon"}]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: unknown platform accepted'; end if;
+
+  rejected := false;
+  begin perform public.ingest_events(key, '[{"name":""}]'::jsonb);
+  exception when others then rejected := true; end;
+  if not rejected then raise exception 'FAIL: event with no name accepted'; end if;
+
+  -- Nothing above should have landed.
+  select count(*) into n from public.events where workspace_id = alice_ws;
+  if n <> 0 then raise exception 'FAIL: % rejected events were written anyway', n; end if;
+
+  -- --- happy path ---------------------------------------------------------
+  -- An empty batch is a no-op, not an error: a client flushing on a timer
+  -- with nothing queued should not see a 400.
+  if public.ingest_events(key, '[]'::jsonb) <> 0 then
+    raise exception 'FAIL: empty batch did not return 0';
+  end if;
+
+  perform public.ingest_events(key, jsonb_build_array(
+    jsonb_build_object('name','page_view','distinct_id','u1','platform','web',
+                       'occurred_at', today + interval '9 hours'),
+    jsonb_build_object('name','page_view','distinct_id','u1','platform','web',
+                       'occurred_at', today + interval '10 hours'),
+    jsonb_build_object('name','page_view','distinct_id','u2','platform','mobile',
+                       'occurred_at', today + interval '9 hours'),
+    jsonb_build_object('name','session_start','distinct_id','u1','platform','web',
+                       'occurred_at', today + interval '9 hours'),
+    jsonb_build_object('name','session_start','distinct_id','u2','platform','mobile',
+                       'occurred_at', today + interval '9 hours'),
+    jsonb_build_object('name','signup','distinct_id','u2',
+                       'occurred_at', today + interval '11 hours'),
+    jsonb_build_object('name','purchase','distinct_id','u2','revenue_cents',25000,
+                       'properties', jsonb_build_object('stream','subscriptions'),
+                       'occurred_at', today + interval '11 hours'),
+    -- An unreserved name: accepted, counted, but drives no chart.
+    jsonb_build_object('name','feature_flag_evaluated','distinct_id','u1',
+                       'occurred_at', today + interval '12 hours')
+  ));
+
+  -- Two views straddling a single day three days back, one near each end of
+  -- it. The rollup's default window starts three days ago; if that start is
+  -- not snapped to midnight it lands mid-day, and this bucket gets deleted in
+  -- full but rebuilt from only the later event. Both must survive.
+  -- Covers all three aggregate shapes — scalar, revenue-by-stream and
+  -- sessions-by-platform — because they are separate statements and only one
+  -- of them being whole-bucket would go unnoticed otherwise.
+  perform public.ingest_events(key, jsonb_build_array(
+    jsonb_build_object('name','page_view','distinct_id','u3','platform','web',
+                       'occurred_at', today - interval '3 days' + interval '30 minutes'),
+    jsonb_build_object('name','page_view','distinct_id','u4','platform','web',
+                       'occurred_at', today - interval '3 days' + interval '23 hours'),
+    jsonb_build_object('name','session_start','distinct_id','u3','platform','web',
+                       'occurred_at', today - interval '3 days' + interval '30 minutes'),
+    jsonb_build_object('name','session_start','distinct_id','u4','platform','web',
+                       'occurred_at', today - interval '3 days' + interval '23 hours'),
+    jsonb_build_object('name','purchase','distinct_id','u3','revenue_cents',10000,
+                       'properties', jsonb_build_object('stream','usage'),
+                       'occurred_at', today - interval '3 days' + interval '30 minutes'),
+    jsonb_build_object('name','purchase','distinct_id','u4','revenue_cents',5000,
+                       'properties', jsonb_build_object('stream','usage'),
+                       'occurred_at', today - interval '3 days' + interval '23 hours')
+  ));
+
+  select count(*) into n from public.events where workspace_id = alice_ws;
+  if n <> 14 then raise exception 'FAIL: expected 14 ingested events, got %', n; end if;
+
+  -- Events must land in the key's workspace, never anywhere else.
+  select count(*) into n from public.events where workspace_id = bob_ws;
+  if n <> 0 then raise exception 'FAIL: ingestion leaked % events into another workspace', n; end if;
+
+  raise notice 'PASS: write key auth, reserved-name validation, and event routing';
+end $$;
+
+-- --- rollup correctness -----------------------------------------------------
+do $$
+declare
+  alice_ws uuid;
+  today    timestamptz := date_trunc('day', now());
+  v        numeric;
+  before_v numeric;
+  after_v  numeric;
+  old_day  timestamptz := date_trunc('day', now()) - interval '30 days';
+begin
+  select default_workspace_id into alice_ws from public.profiles where email = 'alice@novaanalytics.io';
+
+  -- A bucket well outside the rollup window, to prove the rollup leaves
+  -- untouched history alone rather than zeroing everything it did not compute.
+  select value into before_v from public.metric_points
+    where workspace_id = alice_ws and grain = 'day'
+      and metric_key = 'events' and bucket = old_day;
+
+  perform public.refresh_metric_points(alice_ws);
+
+  select value into after_v from public.metric_points
+    where workspace_id = alice_ws and grain = 'day'
+      and metric_key = 'events' and bucket = old_day;
+
+  if before_v is distinct from after_v then
+    raise exception 'FAIL: rollup altered a bucket outside its window (% -> %)', before_v, after_v;
+  end if;
+
+  -- 3 page_views -> visits 3, visitors 2 (u1 twice).
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='visits' and bucket=today;
+  if v <> 3 then raise exception 'FAIL: visits = %, expected 3', v; end if;
+
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='visitors' and bucket=today;
+  if v <> 2 then raise exception 'FAIL: visitors = %, expected 2 distinct', v; end if;
+
+  -- visits > visitors is the whole reason `visits` exists; if a refactor ever
+  -- makes them equal, the conversion denominator has silently gone distinct.
+  if (select count(*) from public.metric_points
+        where workspace_id = alice_ws and grain='day' and bucket=today
+          and metric_key in ('visits','visitors')
+        group by value having count(*) = 2) is not null then
+    raise exception 'FAIL: visits and visitors are identical — denominator is distinct again';
+  end if;
+
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='signups' and bucket=today;
+  if v <> 1 then raise exception 'FAIL: signups = %, expected 1', v; end if;
+
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='events' and bucket=today;
+  if v <> 8 then raise exception 'FAIL: events = %, expected 8', v; end if;
+
+  -- active_users = distinct ids on non-page_view events: u1 and u2.
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='active_users' and bucket=today;
+  if v <> 2 then raise exception 'FAIL: active_users = %, expected 2', v; end if;
+
+  -- 25000 cents -> 250 currency units, matching the seed's units.
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='revenue' and bucket=today
+    and dims->>'stream' = 'subscriptions';
+  if v <> 250 then raise exception 'FAIL: revenue = %, expected 250', v; end if;
+
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='sessions' and bucket=today
+    and dims->>'platform' = 'mobile';
+  if v <> 1 then raise exception 'FAIL: mobile sessions = %, expected 1', v; end if;
+
+  -- The straddling bucket: both ends of the day must be counted. A window
+  -- start that is not snapped to midnight rebuilds this bucket from the later
+  -- event only, and this reads 1.
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='visits' and bucket = today - interval '3 days';
+  if v <> 2 then
+    raise exception 'FAIL: straddling bucket visits = %, expected 2 (scalar aggregate not whole-bucket)', v;
+  end if;
+
+  -- 100.00 + 50.00, both ends of the same day.
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='revenue' and bucket = today - interval '3 days'
+    and dims->>'stream' = 'usage';
+  if v <> 150 then
+    raise exception 'FAIL: straddling bucket revenue = %, expected 150 (revenue aggregate not whole-bucket)', v;
+  end if;
+
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='sessions' and bucket = today - interval '3 days'
+    and dims->>'platform' = 'web';
+  if v <> 2 then
+    raise exception 'FAIL: straddling bucket sessions = %, expected 2 (sessions aggregate not whole-bucket)', v;
+  end if;
+
+  -- Hourly: u1 and u2 both viewed at 09:00, u1 alone at 10:00.
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='hour' and metric_key='visitors' and bucket = today + interval '9 hours';
+  if v <> 2 then raise exception 'FAIL: 09:00 visitors = %, expected 2', v; end if;
+
+  -- Rerunning must be idempotent — the delete-then-insert has to replace, not
+  -- accumulate.
+  perform public.refresh_metric_points(alice_ws);
+  select value into v from public.metric_points where workspace_id = alice_ws
+    and grain='day' and metric_key='events' and bucket=today;
+  if v <> 8 then raise exception 'FAIL: rollup not idempotent (events = % after rerun)', v; end if;
+
+  raise notice 'PASS: rollup metrics, units, and window containment';
+end $$;
+
+-- --- profit is costed, not invented -----------------------------------------
+do $$
+declare
+  alice_ws uuid;
+  bob_ws   uuid;
+  this_mo  timestamptz := date_trunc('month', now());
+  revenue  numeric;
+  events_n numeric;
+  profit   numeric;
+  expected numeric;
+  c        record;
+  n        bigint;
+begin
+  select default_workspace_id into alice_ws from public.profiles where email = 'alice@novaanalytics.io';
+  select default_workspace_id into bob_ws   from public.profiles where email = 'bob@example.com';
+
+  select * into c from public.workspace_costs where workspace_id = alice_ws
+    order by effective_from desc limit 1;
+  if c is null then raise exception 'FAIL: seeded workspace has no cost basis'; end if;
+
+  select value into revenue from public.metric_points
+    where workspace_id = alice_ws and grain='month' and metric_key='revenue' and bucket=this_mo;
+  select coalesce(sum(value),0) into events_n from public.metric_points
+    where workspace_id = alice_ws and grain='day' and metric_key='events'
+      and date_trunc('month', bucket) = this_mo;
+  select value into profit from public.metric_points
+    where workspace_id = alice_ws and grain='month' and metric_key='profit' and bucket=this_mo;
+
+  expected := round(
+    revenue
+    - (c.fixed_monthly_cents / 100.0)
+    - (events_n / 1000.0) * (c.per_1k_events_cents / 100.0)
+    - revenue * (c.revenue_share_bps / 10000.0)
+  , 2);
+
+  if profit is null then raise exception 'FAIL: no profit row for the current month'; end if;
+  if profit <> expected then
+    raise exception 'FAIL: profit = %, cost model says % (revenue %, events %)',
+      profit, expected, revenue, events_n;
+  end if;
+
+  -- The old flat 42% must be gone. If profit is still exactly 0.42 * revenue
+  -- the cost model is not actually driving anything.
+  if revenue > 0 and profit = round(revenue * 0.42) then
+    raise exception 'FAIL: profit still looks like the hardcoded 42%% margin';
+  end if;
+
+  -- A workspace with no cost basis must have no profit series at all, rather
+  -- than a zero-cost one that would draw profit exactly on top of revenue.
+  delete from public.workspace_costs where workspace_id = bob_ws;
+  perform public.refresh_profit_points(bob_ws);
+  select count(*) into n from public.metric_points
+    where workspace_id = bob_ws and metric_key = 'profit';
+  if n <> 0 then
+    raise exception 'FAIL: % profit rows survive with no cost basis', n;
+  end if;
+
+  raise notice 'PASS: profit derived from the cost basis, absent without one';
+end $$;
+
+-- --- ingestion is not reachable from the browser ----------------------------
+do $$
+declare
+  r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    -- ingest_events and the rollups take service_role only. The write key is
+    -- the credential, but keeping them off the public PostgREST surface means
+    -- a validation bug is not directly reachable from the internet.
+    if has_function_privilege(r, 'public.ingest_events(text, jsonb)', 'execute') then
+      raise exception 'FAIL: % can execute ingest_events', r;
+    end if;
+    if has_function_privilege(r, 'public.refresh_metric_points(uuid, timestamptz)', 'execute') then
+      raise exception 'FAIL: % can execute refresh_metric_points', r;
+    end if;
+    if has_function_privilege(r, 'public.refresh_all_metric_points()', 'execute') then
+      raise exception 'FAIL: % can execute refresh_all_metric_points', r;
+    end if;
+    if has_function_privilege(r, 'public.refresh_profit_points_unchecked(uuid)', 'execute') then
+      raise exception 'FAIL: % can execute the unguarded profit refresh', r;
+    end if;
+  end loop;
+
+  -- issue_write_key IS member-callable — that is how the UI mints a key — so
+  -- it must be denied to anon specifically.
+  if has_function_privilege('anon', 'public.issue_write_key(uuid)', 'execute') then
+    raise exception 'FAIL: anon can mint write keys';
+  end if;
+  if not has_function_privilege('authenticated', 'public.issue_write_key(uuid)', 'execute') then
+    raise exception 'FAIL: authenticated cannot mint write keys';
+  end if;
+
+  raise notice 'PASS: ingest surface restricted to service_role';
+end $$;
+
+-- --- a member cannot mint a key for another workspace ------------------------
+do $$
+declare
+  victim_src uuid;
+  blocked    boolean := false;
+begin
+  select d.id into victim_src from public.data_sources d
+    join public.profiles p on p.default_workspace_id = d.workspace_id
+   where p.email = 'alice@novaanalytics.io'
+   order by d.name limit 1;
+
+  set local role authenticated;
+  set local request.jwt.claim.sub = '44444444-4444-4444-8444-444444444444';
+
+  begin
+    perform public.issue_write_key(victim_src);
+  exception when others then
+    blocked := true;
+  end;
+
+  reset role;
+  set local request.jwt.claim.sub = '';
+
+  if not blocked then
+    raise exception 'FAIL: non-member minted a write key for another workspace';
+  end if;
+
+  raise notice 'PASS: write key minting requires membership';
 end $$;
 
 \echo ''

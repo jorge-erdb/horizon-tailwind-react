@@ -159,22 +159,32 @@ begin
   on conflict (workspace_id, grain, metric_key, bucket, dims)
     do update set value = excluded.value, updated_at = now();
 
-  -- Profit modelled as a fixed margin on revenue; enough for a second series.
-  insert into public.metric_points (workspace_id, bucket, grain, metric_key, dims, value)
-  select
-    target_workspace,
-    date_trunc('month', p.bucket),
-    'month',
-    'profit',
-    '{}'::jsonb,
-    round(sum(p.value) * 0.42)
-  from public.metric_points p
-  where p.workspace_id = target_workspace
-    and p.grain = 'day'
-    and p.metric_key = 'revenue'
-  group by date_trunc('month', p.bucket)
-  on conflict (workspace_id, grain, metric_key, bucket, dims)
-    do update set value = excluded.value, updated_at = now();
+  -- Profit used to be written here as a flat 42% of revenue. It is now
+  -- computed from an explicit cost basis by refresh_profit_points (0009), so
+  -- that a real ingested revenue line is never paired with an invented
+  -- margin. All this does is give the demo workspace a basis to be costed
+  -- against; the numbers are stated in the row rather than hidden in a
+  -- multiplier, and the row is editable from the app.
+  --
+  -- Guarded because on a fresh database this file runs before 0009 creates
+  -- the table. 0009's backfill covers that pass.
+  if to_regclass('public.workspace_costs') is not null then
+    insert into public.workspace_costs (
+      workspace_id, effective_from, fixed_monthly_cents,
+      per_1k_events_cents, revenue_share_bps, note
+    )
+    values (
+      target_workspace,
+      (date_trunc('month', now()) - interval '11 months')::date,
+      4800000,  -- $48,000/mo fixed: infrastructure, salaries, tooling
+      35,       -- $0.35 per 1k events ingested
+      290,      -- 2.90% payment processing
+      'Demo cost basis — replace with your actual costs'
+    )
+    on conflict (workspace_id, effective_from) do nothing;
+
+    perform public.refresh_profit_points_unchecked(target_workspace);
+  end if;
 
   -- Today's traffic by hour, for the DailyTraffic bars. Shaped as a working
   -- day: quiet overnight, peaking early afternoon.
