@@ -268,6 +268,18 @@ npm test                                   # Vitest — unit tests
 ./supabase/tests/run-migration-tests.sh    # requires Docker — schema + RLS
 ```
 
+Both run in CI on every push and pull request — see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml). They are split into
+two jobs (`app` and `migrations`) so a red build names which half broke: a
+leaking RLS policy and a broken chart are unrelated problems.
+
+CI does not deploy. Vercel builds from its own GitHub integration, so the
+workflow's job is to tell you whether the commit Vercel is about to ship
+compiles and passes. The build step reads the optional repository secrets
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; without them it still
+compiles, it just produces a bundle that cannot reach the backend, which is
+sufficient for catching compile errors.
+
 ### Unit tests
 
 `src/lib/queries/__tests__/` covers `shape.js`, the pure transforms that turn

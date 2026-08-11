@@ -1,0 +1,70 @@
+# Continuous integration for Nova Analytics.
+#
+# Two independent jobs so a failure names itself: `app` covers everything that
+# ships to the browser, `migrations` covers the database behaviour that RLS and
+# the rollup depend on. A broken policy and a broken chart are different
+# problems and should not hide behind one red X.
+#
+# Vercel builds and deploys on its own from the GitHub integration; this
+# workflow deliberately does not deploy. It is the check that tells you whether
+# the commit Vercel is about to ship actually compiles and passes its tests.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same branch makes the first run irrelevant — cancel it
+# rather than paying for a result nobody will read.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # `npm ci` rather than `npm install`: it installs exactly what
+      # package-lock.json pins and fails if the two have drifted, which is the
+      # point of running this at all.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      # The Supabase values are inlined at build time, so a build without them
+      # still compiles — it just produces a bundle that cannot reach the
+      # backend. That is fine here: this step exists to catch compile errors,
+      # and nothing deploys the artifact. Set the two repository secrets if you
+      # want CI to build the same bundle Vercel does; unset, they resolve to
+      # empty strings and the app falls back to its "not configured" state.
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+  migrations:
+    name: Migration and RLS assertions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The harness drives Docker itself — it starts a throwaway postgres:16
+      # container, applies every migration in order, runs them a second time to
+      # prove idempotency, then executes the assertions. Nothing here touches
+      # the real Supabase project.
+      - name: Run migration tests
+        run: ./supabase/tests/run-migration-tests.sh
