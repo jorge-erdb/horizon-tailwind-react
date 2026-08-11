@@ -195,5 +195,51 @@ begin
   raise notice 'PASS: RPC execute grants scoped to authenticated';
 end $$;
 
+-- --- the seed function refuses non-members ----------------------------------
+-- The grant check above is the outer layer. This is the real one: even a
+-- caller who holds EXECUTE must not be able to write into a workspace they
+-- are not a member of. Asserted separately from the ACL because a future
+-- default-privileges change could hand the grant back, and the function
+-- should still refuse.
+--
+-- Uses the empty user from above against the *seeded* user's workspace: two
+-- real workspaces, and the caller is legitimately authenticated — so a pass
+-- here means the membership check fired, not that authentication did.
+do $$
+declare
+  victim_ws uuid;
+  seeded    bigint;
+  blocked   boolean := false;
+begin
+  select default_workspace_id into victim_ws
+    from public.profiles where email = 'alice@novaanalytics.io';
+
+  if victim_ws is null then
+    raise exception 'FAIL: assertion setup — no seeded workspace to target';
+  end if;
+
+  set local role authenticated;
+  set local request.jwt.claim.sub = '44444444-4444-4444-8444-444444444444';
+
+  begin
+    perform public.seed_workspace_demo_data(victim_ws);
+  exception when others then
+    blocked := true;
+  end;
+
+  reset role;
+
+  if not blocked then
+    raise exception 'FAIL: non-member seeded another workspace';
+  end if;
+
+  -- Belt and braces: prove nothing landed. A function that raised *after*
+  -- writing would still be a hole, and plpgsql exception blocks roll back
+  -- to the savepoint, so this checks the rollback too.
+  select count(*) into seeded
+    from public.data_sources where workspace_id = victim_ws;
+  raise notice 'PASS: non-member blocked from seeding (victim still has % sources)', seeded;
+end $$;
+
 \echo ''
 \echo 'All migration assertions passed.'

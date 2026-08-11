@@ -8,12 +8,16 @@
 -- `anon` role directly, and revoking from `public` does not remove a grant
 -- made to a named role.
 --
--- The practical effect was small — every one of these functions checks
--- `auth.uid()` through `is_workspace_member`, which is null for `anon`, so an
--- unauthenticated call raised "Not a member of that workspace" rather than
--- returning data. But an anonymous caller should not reach the function body
--- at all: that is one guard away from an information leak, and it lets an
--- unauthenticated client burn database time.
+-- For three of the four the practical effect was small: `pct_change`,
+-- `get_dashboard_kpis` and `create_workspace` each check `auth.uid()`, which
+-- is null for `anon`, so an unauthenticated call raised rather than returning
+-- data. Reaching the function body at all is still wrong — it is one guard
+-- away from a leak and lets an unauthenticated client burn database time.
+--
+-- `seed_workspace_demo_data` was NOT in that position. It had no membership
+-- check whatsoever, so the anon grant made it an unauthenticated write into
+-- any workspace by UUID. That is fixed properly in 0008_seed_guard.sql; the
+-- revoke below is the outer layer, not the fix.
 
 revoke execute on function public.pct_change(numeric, numeric) from anon;
 revoke execute on function public.get_dashboard_kpis(uuid, integer) from anon;
