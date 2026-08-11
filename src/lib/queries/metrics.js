@@ -23,6 +23,30 @@ import {
  * The shaping itself lives in ./shape.js so it can be tested without React.
  */
 
+/**
+ * Metric queries poll; the rest of the app does not.
+ *
+ * These five hooks are the only ones backed by data that changes without the
+ * user doing anything — ingestion writes events, the rollup rewrites buckets,
+ * and the numbers move. Tasks, reports and notifications change on user action
+ * and are already invalidated by their mutations, so polling them would be
+ * load without information.
+ *
+ * Paired with `staleTime` so an invalidation between ticks is still honoured
+ * rather than being held back by the global 60s freshness window in
+ * lib/queryClient.js. `refetchIntervalInBackground` stays at its default of
+ * false, so a dashboard left open in a hidden tab costs nothing.
+ *
+ * 15s is a deliberate compromise: fast enough that a write feels live, slow
+ * enough that five queries per tab is not a busy loop. It is not a push
+ * subscription — Supabase Realtime would be the honest way to do that, and is
+ * the right upgrade if this ever needs sub-second latency.
+ */
+const LIVE = {
+  refetchInterval: 15_000,
+  staleTime: 15_000,
+};
+
 // --- the six KPI tiles, in one round trip -----------------------------------
 
 export function useDashboardKpis(windowDays = 30) {
@@ -39,7 +63,7 @@ export function useDashboardKpis(windowDays = 30) {
       // though there is exactly one row.
       return rows?.[0] ?? null;
     },
-    { keyExtras: [windowDays] }
+    { keyExtras: [windowDays], ...LIVE }
   );
 }
 
@@ -104,7 +128,7 @@ export function useRevenueTrend(months = 12) {
           : "month over month",
       };
     },
-    { keyExtras: [months] }
+    { keyExtras: [months], ...LIVE }
   );
 }
 
@@ -135,7 +159,7 @@ export function useRevenueByStream(days = 7) {
         })),
       };
     },
-    { keyExtras: [days] }
+    { keyExtras: [days], ...LIVE }
   );
 }
 
@@ -163,7 +187,8 @@ export function useDailyTraffic() {
         ],
         total: rows.reduce((sum, row) => sum + Number(row.value), 0),
       };
-    }
+    },
+    LIVE
   );
 }
 
@@ -185,6 +210,6 @@ export function useSessionsByPlatform(days = 30) {
 
       return totalsByDim(rows, "platform");
     },
-    { keyExtras: [days] }
+    { keyExtras: [days], ...LIVE }
   );
 }
