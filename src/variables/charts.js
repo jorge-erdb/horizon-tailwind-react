@@ -122,8 +122,13 @@ export const barChartOptionsDailyTraffic = {
 };
 
 export const pieChartOptions = {
+  // `labels` is overridden by PieChartCard from the query. It stays here as a
+  // sane default for a chart rendered without data.
   labels: ["Web", "Mobile", "API"],
-  colors: ["#4F46E5", "#22D3EE", "#F5A623"],
+  // Four colours for four platforms. events.platform allows 'server' as well
+  // as web/mobile/api, so a workspace ingesting server-side events gets a
+  // fourth donut segment -- with three colours Apex leaves it unpainted.
+  colors: ["#4F46E5", "#22D3EE", "#F5A623", "#A78BFA"],
   chart: {
     width: "50px",
   },
@@ -152,7 +157,7 @@ export const pieChartOptions = {
     },
   },
   fill: {
-    colors: ["#4F46E5", "#22D3EE", "#F5A623"],
+    colors: ["#4F46E5", "#22D3EE", "#F5A623", "#A78BFA"],
   },
   tooltip: {
     enabled: true,

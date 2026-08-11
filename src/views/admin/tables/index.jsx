@@ -20,6 +20,8 @@ import {
   toDevelopmentRows,
   toReportRows,
 } from "lib/tableRows";
+import ConnectSource from "./components/ConnectSource";
+import { functionsUrl } from "lib/supabase";
 
 /**
  * Wraps a table in its own boundary so one slow or failing query does not
@@ -56,6 +58,13 @@ const Tables = () => {
 
   return (
     <div>
+      {/* Above the tables on purpose: an empty workspace shows four empty
+          tables, and the only useful action from that state is connecting a
+          source. */}
+      <div className="mt-5">
+        <ConnectSource functionsUrl={functionsUrl} />
+      </div>
+
       <div className="mt-5 grid h-full grid-cols-1 gap-5 md:grid-cols-2">
         <TablePanel query={dataSources} empty={SOURCES_EMPTY}>
           {() => (

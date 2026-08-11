@@ -32,6 +32,17 @@ if (!isSupabaseConfigured) {
   );
 }
 
+/**
+ * Base URL for Edge Functions, derived rather than configured separately so
+ * it cannot drift from the project the client is pointed at.
+ *
+ * Null when unconfigured; callers show a placeholder instead of building a
+ * URL against `undefined`.
+ */
+export const functionsUrl = supabaseUrl
+  ? `${supabaseUrl.replace(/\/+$/, "")}/functions/v1`
+  : null;
+
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

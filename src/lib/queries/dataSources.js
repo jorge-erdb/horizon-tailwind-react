@@ -40,6 +40,24 @@ export function useCreateDataSource() {
   );
 }
 
+/**
+ * Mint (or rotate) a source's write key.
+ *
+ * The plaintext is returned by the RPC and never stored — only its SHA-256
+ * hash and a six-character hint land in the table. That means this is the one
+ * and only moment the key exists anywhere the user can see it, so the caller
+ * has to hold it in component state and show it; there is no way to fetch it
+ * back afterwards.
+ *
+ * Rotating invalidates the previous key immediately: there is a single hash
+ * column, so the old value is overwritten rather than kept alongside.
+ */
+export function useIssueWriteKey() {
+  return useWorkspaceMutation("data_sources", async ({ supabase, id }) =>
+    unwrap(await supabase.rpc("issue_write_key", { target_source: id }))
+  );
+}
+
 export function useUpdateDataSource() {
   return useWorkspaceMutation(
     "data_sources",

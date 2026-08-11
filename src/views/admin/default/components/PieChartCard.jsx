@@ -8,7 +8,16 @@ import { useSessionsByPlatform } from "lib/queries/metrics";
 // Matches pieChartOptions.colors / fill.colors by index. The chart assigns
 // colours in series order and totalsByDim sorts largest-first, so the legend
 // swatch under a slice is the same colour as the slice.
-const SWATCHES = ["bg-brand-500", "bg-accent-500", "bg-amber-500"];
+//
+// Four entries because events.platform allows 'server' alongside
+// web/mobile/api. bg-violet-400 is #A78BFA, the fourth colour in
+// pieChartOptions — if either list changes, both must.
+const SWATCHES = [
+  "bg-brand-500",
+  "bg-accent-500",
+  "bg-amber-500",
+  "bg-violet-400",
+];
 
 const PieChartCard = () => {
   const query = useSessionsByPlatform(30);

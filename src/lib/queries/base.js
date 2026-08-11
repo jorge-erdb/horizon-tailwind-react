@@ -78,7 +78,10 @@ export function describeQueryError(error) {
       return "That table doesn't exist yet. Run the migrations in supabase/migrations against your project.";
     case "42883":
     case "PGRST202":
-      return "A required database function is missing. Run supabase/migrations/0005_rpc.sql against your project.";
+      // Deliberately not naming a single file: RPCs are defined across 0005,
+      // 0009 and 0010, and pointing at the wrong one sends people to a file
+      // they have already run and leaves them stuck.
+      return "A required database function is missing. Run the migrations in supabase/migrations against your project.";
     case "42501":
       return "You don't have permission to read this. Check that you're still a member of this workspace.";
     case "P0001":

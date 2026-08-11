@@ -32,8 +32,11 @@ Other scripts:
 | `npm run build` | Production bundle into `dist/` |
 | `npm run preview` | Serve the production build locally on port 3000 |
 | `npm run pretty` | Prettier over `src/**/*.{js,jsx,json}` |
+| `npm test` | Vitest, single run |
+| `npm run test:watch` | Vitest in watch mode |
 
-There is no test script — no test runner is configured yet. See Limitations.
+The SQL layer has its own suite — `./supabase/tests/run-migration-tests.sh`,
+which needs Docker and never touches your Supabase project. See Testing.
 
 ### Environment variables
 
@@ -87,6 +90,10 @@ Notes:
    | `0004_metrics` | `events` (phase 5) and `metric_points` + `get_metric_series` |
    | `0005_rpc` | `get_dashboard_kpis` |
    | `0006_seed` | `seed_workspace_demo_data`, then seeds existing workspaces |
+   | `0007_function_grants` | Revokes `anon` EXECUTE left by Supabase's defaults |
+   | `0008_seed_guard` | Requires workspace membership to run the seeder |
+   | `0009_costs` | `workspace_costs`; profit becomes computed, not invented |
+   | `0010_ingest` | Write keys, `ingest_events`, `refresh_metric_points`, pg_cron |
 
    Verify them locally first with `./supabase/tests/run-migration-tests.sh`
    (see Testing below).
@@ -97,6 +104,92 @@ Notes:
 If the two env vars are missing the app still builds and runs — the landing
 page works, and the auth screens render with an explanatory banner and
 disabled submit buttons rather than crashing.
+
+---
+
+## Event ingestion
+
+Every number on the dashboard is read from `metric_points`. Those rows come
+either from the demo seed or from real events rolled up on a schedule — the
+UI cannot tell the difference, which is what lets a workspace carry seeded
+history and live data at the same time.
+
+### Setting it up
+
+1. **Database → Extensions**: enable `pg_cron`, then re-run
+   `0010_ingest.sql`. The schedule block is guarded, so without the extension
+   everything still works — the rollup just never runs on its own.
+2. **Deploy the function**:
+   ```bash
+   supabase functions deploy ingest --no-verify-jwt
+   ```
+   `--no-verify-jwt` is required and is not a weakening. The gateway checks
+   for a Supabase JWT *before* your code runs, and ingest callers authenticate
+   with a write key, which is not a JWT — leave it on and every legitimate
+   request is rejected with a 401 you will never see in the logs.
+   `supabase/config.toml` sets this for CLI deploys.
+3. **Create a source**: Data Tables → Connect a source. The write key is shown
+   **once**. Only a SHA-256 hash and a six-character hint are stored, so a
+   lost key must be rotated, not recovered.
+
+### Sending events
+
+```bash
+curl -X POST https://<project-ref>.supabase.co/functions/v1/ingest \
+  -H "Authorization: Bearer nvk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"events":[{"name":"page_view","distinct_id":"u_123","platform":"web"}]}'
+```
+
+Up to 500 events per request. `202` with `{"accepted":N}` on success, `401`
+for a bad key, `400` for a malformed event.
+
+### The event contract
+
+Any event name is accepted and counted, but four names drive charts and are
+validated strictly — a typo'd `purchase` is not a missing bar, it is a wrong
+one, and wrong is worse than absent.
+
+| Name | Required | Feeds |
+| --- | --- | --- |
+| `page_view` | `distinct_id` | `visits`, `visitors` (hourly + daily) |
+| `session_start` | `distinct_id` | `sessions`, split by `platform` |
+| `signup` | — | `signups` (conversion numerator) |
+| `purchase` | `revenue_cents`, `properties.stream` | `revenue`, split by stream |
+| *anything else* | `name` | `events`, `active_users` |
+
+`platform` must be one of `web`, `mobile`, `api`, `server`. `stream` must be
+one of `subscriptions`, `usage`, `services`. `occurred_at` defaults to now,
+so backfilling history means setting it explicitly.
+
+### visits vs visitors
+
+`visitors` is a distinct count and therefore **not additive** — summing seven
+days of it counts a returning visitor once per day. `visits` is a raw
+`page_view` count and is additive, which is why the conversion rate uses it
+as its denominator. Anything summing metrics across buckets must use
+`visits`, `events`, `signups` or `revenue`; `visitors` and `active_users` are
+only meaningful at the grain they were computed at.
+
+### Profit and the cost model
+
+`profit` is derived from `workspace_costs`, not from a margin assumption:
+
+```
+profit = revenue
+       - fixed_monthly_cents
+       - per_1k_events_cents × (events / 1000)
+       - revenue × revenue_share_bps / 10000
+```
+
+Rows are effective-dated, so each month is costed at the basis in force
+during that month rather than restating history whenever a bill changes.
+
+**A workspace with no cost row gets no profit series at all**, and the chart
+drops to a single revenue line. That is deliberate: "we have not said what
+things cost" must not render as "we have no costs", which is exactly what a
+zero-cost default would draw. The demo seed inserts a clearly-labelled basis
+so the seeded workspace still shows two lines.
 
 ---
 
@@ -140,6 +233,7 @@ src/
     admin/                Dashboard, data tables, profile
   routes/                 adminRoutes (sidebar nav) + authRoutes
 supabase/migrations/      SQL to run in the Supabase SQL Editor, in order
+supabase/functions/ingest Edge Function: the public event ingest endpoint
 supabase/tests/           Dockerised migration test harness
 tailwind.config.js        Nova design tokens
 vercel.json               SPA rewrite, caching, security headers
@@ -219,6 +313,29 @@ migration **twice** to prove idempotency, then asserts behaviour:
 - an unseeded workspace returns zeros rather than nulls or an error
 - RPC execute grants are scoped to `authenticated`, not `anon` (see
   `0007_function_grants.sql`)
+- **write keys** — an empty, null or unknown key is rejected, and in
+  particular a key can never match one of the six seeded sources that have
+  no key at all. That last case is the most dangerous failure in the
+  pipeline: a null-tolerant comparison would turn "no key issued" into
+  "accepts any key" and hand the public internet a write into a real
+  workspace
+- reserved-name validation rejects an unknown revenue stream, a `purchase`
+  with no `revenue_cents`, and an unknown platform — and nothing from a
+  rejected batch is written
+- the rollup's arithmetic, units (cents in, currency out), idempotency on
+  re-run, and **window containment**: buckets outside the window are left
+  untouched, and a bucket straddling the window boundary is rebuilt from the
+  whole day rather than the slice after the cutoff
+- `profit` matches the cost model exactly, and disappears entirely when the
+  cost basis is removed
+- `ingest_events` and the rollups are executable by `service_role` only, so a
+  validation bug is not directly reachable from the browser
+
+`supabase/functions/ingest/__tests__/` covers the only logic the Edge
+Function owns — header parsing and SQLSTATE-to-HTTP mapping. The rest is
+delegated to `ingest_events()` on purpose: two implementations of "is this
+key valid" would drift, and the one that drifts is the one on the public
+internet.
 
 Isolation is the reason this exists. A mistaken RLS policy does not raise an
 error — it silently returns rows, so "the migration ran fine" proves nothing.
@@ -250,13 +367,24 @@ Things worth knowing before this goes in front of anyone:
 
 **Data**
 
-- **The dashboard charts and tables are still static demo data.** Every
-  number, chart and table row is a fixture under
-  `src/views/admin/*/variables/`. The only live data in the app is the
-  signed-in user and their profile row.
-- The profile page reads the real account, but the "Plan" and "Data
-  residency" cards are still hardcoded copy — there are no columns behind
-  them yet.
+- Every KPI, chart, table and profile card now reads from Postgres. A fresh
+  workspace is empty until it is seeded or starts ingesting.
+- **Demo seed data and real events look identical in the UI.** That is
+  deliberate — it is what lets a workspace carry seeded history alongside
+  live data — but it also means a seeded workspace shows numbers nobody
+  measured. `workspace_costs.note` on the seeded basis says so; nothing else
+  does. Clear `metric_points` before showing a workspace to a customer.
+- Two cards on the profile page are still template fiction: the `Upload`
+  card ("Complete Your Profile" / "Publish now") and the `Notification`
+  settings card, whose toggles are not wired to anything. Neither was in
+  scope for the data work; both should be built or removed before this is
+  shown to a user.
+- The seeded hourly traffic series covers a full UTC day, including hours
+  that have not happened yet, so the DailyTraffic chart runs to the end of
+  the day in a seeded workspace. Real ingestion does not do this.
+- The "Data Sources" KPI counts every source while the table beneath it caps
+  at five rows, so a workspace with six sources shows a tile and a table that
+  appear to disagree. Inherited from the Horizon table components.
 - **Landing page claims were audited and rewritten.** The original copy was
   placeholder that asserted a "SOC 2 Type II" certification, "99.98% platform
   uptime", "<400ms median query time", "5.7M events ingested daily" and "24
@@ -272,13 +400,20 @@ Things worth knowing before this goes in front of anyone:
   Nova actually holds it.
 
 - Pricing figures ($0 / $390 / Custom) are intended pricing. There is no
-  billing integration and no event metering behind the quotas.
+  billing integration. Event volume is now metered (`metric_points`,
+  `metric_key = 'events'`), but nothing enforces a quota against it.
 
 **Build and tooling**
 
-- No frontend tests and no JS test runner. `@testing-library` packages are
-  still installed from the CRA era but nothing runs them — Vitest is the
-  natural fit alongside Vite. The SQL layer *is* covered, see Testing.
+- Test coverage is deliberately narrow: the pure transforms in
+  `lib/queries/shape.js`, the ingest function's request parsing, and the SQL
+  layer. There are no component tests — `@testing-library` is still installed
+  from the CRA era and unused. Rendering is not where the silent bugs have
+  been; arithmetic and time zones are.
+- The Edge Function has never been executed here — this machine has neither
+  Deno nor the Supabase CLI. Its parsing logic is unit tested and the SQL it
+  calls is covered end to end, but the deployed HTTP path itself is unverified
+  until someone runs `curl` against it.
 - The dashboard chunk is ~169 KB gzipped, almost all ApexCharts. It is
   already split away from the landing and auth bundles, but swapping to a
   lighter chart library would matter more than any further splitting.
