@@ -98,7 +98,9 @@ export function AuthProvider({ children }) {
 
     supabase
       .from("profiles")
-      .select("id, email, full_name, role, team, avatar_url, created_at")
+      .select(
+        "id, email, full_name, role, team, avatar_url, default_workspace_id, created_at"
+      )
       .eq("id", userId)
       .maybeSingle()
       .then(({ data, error }) => {

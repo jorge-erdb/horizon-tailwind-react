@@ -12,6 +12,7 @@
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@supabase/supabase-js": "^2.112.2",
+    "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-table": "^8.7.9",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
@@ -30,7 +31,9 @@
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "pretty": "prettier --write \"./src/**/*.{js,jsx,json}\""
+    "pretty": "prettier --write \"./src/**/*.{js,jsx,json}\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.5",
@@ -39,7 +42,8 @@
     "prettier": "^2.8.3",
     "prettier-plugin-tailwindcss": "^0.2.1",
     "tailwindcss": "^3.1.8",
-    "vite": "^8.2.1"
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
   },
   "browserslist": [
     "> 0.2%",
