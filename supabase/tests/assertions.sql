@@ -673,6 +673,13 @@ begin
     if has_function_privilege(r, 'public.ingest_events(text, jsonb)', 'execute') then
       raise exception 'FAIL: % can execute ingest_events', r;
     end if;
+
+    -- 0011's wrapper is a second door onto the same room, and a wrapper is
+    -- exactly the kind of thing that gets added without revisiting the grants
+    -- on the thing it wraps.
+    if has_function_privilege(r, 'public.ingest_and_refresh(text, jsonb)', 'execute') then
+      raise exception 'FAIL: % can execute ingest_and_refresh', r;
+    end if;
     if has_function_privilege(r, 'public.refresh_metric_points(uuid, timestamptz)', 'execute') then
       raise exception 'FAIL: % can execute refresh_metric_points', r;
     end if;

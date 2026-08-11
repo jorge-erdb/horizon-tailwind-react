@@ -93,7 +93,12 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/ingest_events`, {
+  // ingest_and_refresh (0011) wraps ingest_events and rolls the batch up into
+  // metric_points before returning, so the dashboard reflects the write
+  // immediately instead of waiting up to five minutes for cron. Every
+  // rejection path still comes from ingest_events, so the status mapping below
+  // is unchanged.
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/ingest_and_refresh`, {
     method: "POST",
     headers: {
       apikey: SERVICE_ROLE_KEY,
