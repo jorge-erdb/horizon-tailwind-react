@@ -9,11 +9,12 @@ import { useNavigate } from "react-router-dom";
 import NovaLogo from "components/brand/NovaLogo";
 import NotificationsMenu from "components/navbar/NotificationsMenu";
 import { useAuth } from "contexts/AuthContext";
+import { useTheme } from "contexts/ThemeContext";
 import avatar from "assets/img/avatars/avatar4.png";
 
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;
-  const [darkmode, setDarkmode] = React.useState(false);
+  const { isDark, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -123,24 +124,26 @@ const Navbar = (props) => {
           classNames={"py-2 top-6 -left-[250px] md:-left-[330px] w-max"}
           animation="origin-[75%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
         />
-        <div
-          className="cursor-pointer text-gray-600"
-          onClick={() => {
-            if (darkmode) {
-              document.body.classList.remove("dark");
-              setDarkmode(false);
-            } else {
-              document.body.classList.add("dark");
-              setDarkmode(true);
-            }
-          }}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          aria-pressed={isDark}
+          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          className="cursor-pointer rounded text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
-          {darkmode ? (
-            <RiSunFill className="h-4 w-4 text-gray-600 dark:text-white" />
+          {isDark ? (
+            <RiSunFill
+              className="h-4 w-4 text-gray-600 dark:text-white"
+              aria-hidden="true"
+            />
           ) : (
-            <RiMoonFill className="h-4 w-4 text-gray-600 dark:text-white" />
+            <RiMoonFill
+              className="h-4 w-4 text-gray-600 dark:text-white"
+              aria-hidden="true"
+            />
           )}
-        </div>
+        </button>
         {/* Profile & Dropdown */}
         <Dropdown
           button={
