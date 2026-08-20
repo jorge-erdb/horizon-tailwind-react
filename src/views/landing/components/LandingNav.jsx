@@ -9,8 +9,13 @@ const sections = [
   { label: "Pricing", href: "#pricing" },
 ];
 
-const LandingNav = () => {
+// `onLanding` distinguishes the marketing page, where the section links are
+// in-page anchors, from the standalone pages (legal, docs, 404) that reuse
+// this header — there the same anchors have to navigate home first, or they
+// silently do nothing.
+const LandingNav = ({ onLanding = true }) => {
   const [open, setOpen] = useState(false);
+  const sectionHref = (href) => (onLanding ? href : `/${href}`);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-navy-900/95 backdrop-blur-xl">
@@ -23,7 +28,7 @@ const LandingNav = () => {
           {sections.map((section) => (
             <a
               key={section.href}
-              href={section.href}
+              href={sectionHref(section.href)}
               className="text-sm font-medium text-white/70 transition-colors hover:text-white"
             >
               {section.label}
@@ -53,7 +58,11 @@ const LandingNav = () => {
           aria-expanded={open}
           className="rounded-lg p-2 text-white md:hidden"
         >
-          {open ? <MdClose className="h-6 w-6" /> : <MdMenu className="h-6 w-6" />}
+          {open ? (
+            <MdClose className="h-6 w-6" />
+          ) : (
+            <MdMenu className="h-6 w-6" />
+          )}
         </button>
       </div>
 
@@ -63,7 +72,7 @@ const LandingNav = () => {
             {sections.map((section) => (
               <a
                 key={section.href}
-                href={section.href}
+                href={sectionHref(section.href)}
                 onClick={() => setOpen(false)}
                 className="text-base font-medium text-white/80"
               >
