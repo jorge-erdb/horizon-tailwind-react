@@ -135,7 +135,7 @@ const Pricing = () => {
                           className={`ml-2 inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${
                             plan.featured
                               ? "bg-white/15 text-accent-300"
-                              : "bg-amber-500/15 text-amber-700"
+                              : "bg-amber-500/15 text-amber-800"
                           }`}
                         >
                           Planned

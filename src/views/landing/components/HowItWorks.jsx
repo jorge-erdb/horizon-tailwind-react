@@ -60,7 +60,7 @@ const HowItWorks = () => {
         <ol className="mt-14 grid gap-8 md:grid-cols-3">
           {steps.map((item) => (
             <li key={item.step} className="relative">
-              <span className="font-mono text-sm font-semibold text-accent-600">
+              <span className="font-mono text-sm font-semibold text-accent-700">
                 {item.step}
               </span>
               <div className="mt-3 h-px w-full bg-neutral-200" />
@@ -89,7 +89,7 @@ const HowItWorks = () => {
           <ul className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {roadmap.map((item) => (
               <li key={item.title}>
-                <span className="inline-flex rounded-full bg-amber-500/15 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                <span className="inline-flex rounded-full bg-amber-500/15 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-amber-800">
                   Planned
                 </span>
                 <p className="mt-3 font-display text-base font-bold text-navy-700">

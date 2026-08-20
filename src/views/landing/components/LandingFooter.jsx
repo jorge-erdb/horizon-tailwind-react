@@ -28,14 +28,22 @@ const columns = [
   },
 ];
 
-const LandingFooter = () => {
+// See LandingNav: off the marketing page the Product column's in-page
+// anchors have to navigate home first.
+const LandingFooter = ({ onLanding = true }) => {
+  const resolve = (href) =>
+    !onLanding && href.startsWith("#") ? `/${href}` : href;
+
   return (
     <footer className="bg-navy-900 py-14">
       <div className="mx-auto max-w-6xl px-5 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" aria-label="Nova Analytics home">
-              <NovaLogo variant="horizontal" className="h-8 w-auto text-white" />
+              <NovaLogo
+                variant="horizontal"
+                className="h-8 w-auto text-white"
+              />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/50">
               Turn product and revenue data into decisions your team can act on.
@@ -51,7 +59,7 @@ const LandingFooter = () => {
                 {column.links.map((link) => (
                   <li key={link.label}>
                     <a
-                      href={link.href}
+                      href={resolve(link.href)}
                       className="text-sm text-white/50 transition-colors hover:text-white"
                     >
                       {link.label}
@@ -64,7 +72,7 @@ const LandingFooter = () => {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-white/50">
             © {new Date().getFullYear()} Nova Analytics. All rights reserved.
           </p>
           <div className="flex gap-6">

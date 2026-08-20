@@ -77,7 +77,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="mt-16 mb-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
+    <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
       <div className="mt-[10vh] w-full max-w-full flex-col items-center md:pl-4 lg:pl-0 xl:max-w-[420px]">
         <h4 className="mb-2.5 font-display text-4xl font-bold text-navy-700 dark:text-white">
           Create your workspace
@@ -89,8 +89,8 @@ export default function SignUp() {
         {!isConfigured && (
           <AuthFeedback tone="info">
             Supabase isn't configured yet, so sign-up is disabled. Add
-            VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to
-            .env.local and restart the dev server.
+            VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local and
+            restart the dev server.
           </AuthFeedback>
         )}
 
@@ -175,11 +175,17 @@ export default function SignUp() {
 
         <p className="mt-4 text-xs leading-relaxed text-gray-600">
           By creating an account you agree to Nova Analytics'{" "}
-          <a href="/legal/terms" className="text-brand-500 hover:underline">
+          <a
+            href="/legal/terms"
+            className="font-medium text-brand-500 underline underline-offset-2 hover:text-brand-600"
+          >
             Terms of Use
           </a>{" "}
           and{" "}
-          <a href="/legal/privacy" className="text-brand-500 hover:underline">
+          <a
+            href="/legal/privacy"
+            className="font-medium text-brand-500 underline underline-offset-2 hover:text-brand-600"
+          >
             Privacy Policy
           </a>
           .
